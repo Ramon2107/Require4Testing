@@ -26,7 +26,7 @@ Require4Testing ist eine Web-Anwendung, die Teams dabei unterstützt, manuelle A
 - **Spring Boot 3.2.0**
 - **Spring Data JPA**
 - **Spring Security**
-- **H2 Database** (In-Memory)
+- **MySQL Database**
 - **Thymeleaf**
 - **Maven**
 
@@ -36,6 +36,17 @@ Require4Testing ist eine Web-Anwendung, die Teams dabei unterstützt, manuelle A
 
 - Java 17 oder höher
 - Maven 3.6+
+- MySQL 8.0+ (oder MariaDB)
+
+### MySQL Datenbank einrichten
+
+1. Starten Sie MySQL Server
+2. Die Datenbank `require4testingdb` wird automatisch erstellt beim ersten Start
+
+Optional können Sie die Datenbank manuell erstellen:
+```sql
+CREATE DATABASE require4testingdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
 ### Anwendung starten
 
@@ -50,13 +61,15 @@ mvn spring-boot:run
 
 Die Anwendung ist dann unter `http://localhost:8080` erreichbar.
 
-### H2-Konsole
+### Datenbank-Konfiguration anpassen
 
-Die H2-Datenbank-Konsole ist unter `http://localhost:8080/h2-console` erreichbar.
+Die MySQL-Verbindungsdaten können in `src/main/resources/application.properties` angepasst werden:
 
-- JDBC URL: `jdbc:h2:mem:require4testingdb`
-- Username: `sa`
-- Password: (leer)
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/require4testingdb
+spring.datasource.username=root
+spring.datasource.password=IhrPasswort
+```
 
 ## API-Dokumentation
 
