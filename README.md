@@ -179,6 +179,29 @@ POST /api/test-results
 }
 ```
 
+### Testfall-Testlauf-Zuordnungen (Test Case Test Run Assignments)
+
+| Methode | Endpunkt | Beschreibung |
+|---------|----------|--------------|
+| GET | `/api/test-case-test-runs` | Alle Zuordnungen abrufen |
+| GET | `/api/test-case-test-runs/{id}` | Zuordnung nach ID abrufen |
+| GET | `/api/test-case-test-runs/test-case/{testCaseId}` | Zuordnungen nach Testfall |
+| GET | `/api/test-case-test-runs/test-run/{testRunId}` | Zuordnungen nach Testlauf |
+| GET | `/api/test-case-test-runs/tester/{testerId}` | Zuordnungen nach Tester |
+| POST | `/api/test-case-test-runs` | Neue Zuordnung erstellen |
+| PUT | `/api/test-case-test-runs/{id}` | Zuordnung aktualisieren |
+| DELETE | `/api/test-case-test-runs/{id}` | Zuordnung löschen |
+
+**Beispiel - Testfall einem Testlauf mit Tester zuordnen:**
+```json
+POST /api/test-case-test-runs
+{
+    "testCaseId": 1,
+    "testRunId": 1,
+    "testerId": 2
+}
+```
+
 ## Datenmodell
 
 ### User (Benutzer)
