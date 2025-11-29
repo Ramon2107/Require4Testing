@@ -3,6 +3,7 @@ package com.iu.require4testing.controller;
 import com.iu.require4testing.dto.TestCaseTestRunDTO;
 import com.iu.require4testing.entity.TestCaseTestRun;
 import com.iu.require4testing.service.TestCaseTestRunService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.List;
  * Ermöglicht das Zuordnen von Testfällen und Testern zu Testläufen.
  * Diese Funktion ist notwendig für Testmanager:innen, um Testfälle
  * und Tester:innen einem Testlauf zuzuweisen.
+ * Implementiert Best Practices für RESTful Web Services.
  */
 @RestController
 @RequestMapping("/api/test-case-test-runs")
@@ -108,12 +110,13 @@ public class TestCaseTestRunController {
      * Erstellt eine neue Zuordnung zwischen Testfall, Testlauf und Tester.
      * Ermöglicht Testmanager:innen, Testfälle einem Testlauf zuzuweisen
      * und einen Tester für die Durchführung zu bestimmen.
+     * Die Eingabedaten werden automatisch validiert.
      * 
-     * @param dto Die Zuordnungsdaten
+     * @param dto Die Zuordnungsdaten (validiert)
      * @return Die erstellte Zuordnung
      */
     @PostMapping
-    public ResponseEntity<TestCaseTestRunDTO> createTestCaseTestRun(@RequestBody TestCaseTestRunDTO dto) {
+    public ResponseEntity<TestCaseTestRunDTO> createTestCaseTestRun(@Valid @RequestBody TestCaseTestRunDTO dto) {
         TestCaseTestRun assignment = convertToEntity(dto);
         TestCaseTestRun createdAssignment = testCaseTestRunService.createTestCaseTestRun(assignment);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(createdAssignment));
@@ -122,14 +125,15 @@ public class TestCaseTestRunController {
     /**
      * Aktualisiert eine bestehende Zuordnung.
      * Ermöglicht das Ändern des zugewiesenen Testers.
+     * Die Eingabedaten werden automatisch validiert.
      * 
      * @param id Die Zuordnungs-ID
-     * @param dto Die neuen Zuordnungsdaten
+     * @param dto Die neuen Zuordnungsdaten (validiert)
      * @return Die aktualisierte Zuordnung
      */
     @PutMapping("/{id}")
     public ResponseEntity<TestCaseTestRunDTO> updateTestCaseTestRun(@PathVariable Long id, 
-                                                                    @RequestBody TestCaseTestRunDTO dto) {
+                                                                    @Valid @RequestBody TestCaseTestRunDTO dto) {
         TestCaseTestRun assignment = convertToEntity(dto);
         TestCaseTestRun updatedAssignment = testCaseTestRunService.updateTestCaseTestRun(id, assignment);
         return ResponseEntity.ok(convertToDTO(updatedAssignment));

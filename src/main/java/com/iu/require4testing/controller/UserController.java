@@ -2,6 +2,7 @@ package com.iu.require4testing.controller;
 
 import com.iu.require4testing.dto.UserDTO;
 import com.iu.require4testing.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * REST-Controller für Benutzer-Endpunkte.
  * Bietet CRUD-Operationen für Benutzer über die REST-API.
+ * Implementiert Best Practices für RESTful Web Services.
  */
 @RestController
 @RequestMapping("/api/users")
@@ -19,6 +21,11 @@ public class UserController {
     
     private final UserService userService;
     
+    /**
+     * Konstruktor mit Dependency Injection.
+     * 
+     * @param userService Der Benutzer-Service
+     */
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
@@ -61,25 +68,27 @@ public class UserController {
     
     /**
      * Erstellt einen neuen Benutzer.
+     * Die Eingabedaten werden automatisch validiert.
      * 
-     * @param userDTO Die Benutzerdaten
+     * @param userDTO Die Benutzerdaten (validiert)
      * @return Der erstellte Benutzer
      */
     @PostMapping
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserDTO userDTO) {
         UserDTO createdUser = userService.createUser(userDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
     
     /**
      * Aktualisiert einen bestehenden Benutzer.
+     * Die Eingabedaten werden automatisch validiert.
      * 
      * @param id Die Benutzer-ID
-     * @param userDTO Die neuen Benutzerdaten
+     * @param userDTO Die neuen Benutzerdaten (validiert)
      * @return Der aktualisierte Benutzer
      */
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO userDTO) {
         UserDTO updatedUser = userService.updateUser(id, userDTO);
         return ResponseEntity.ok(updatedUser);
     }

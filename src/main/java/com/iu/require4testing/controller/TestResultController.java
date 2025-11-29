@@ -2,6 +2,7 @@ package com.iu.require4testing.controller;
 
 import com.iu.require4testing.dto.TestResultDTO;
 import com.iu.require4testing.service.TestResultService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * REST-Controller für Testergebnis-Endpunkte.
  * Bietet CRUD-Operationen für Testergebnisse über die REST-API.
+ * Implementiert Best Practices für RESTful Web Services.
  */
 @RestController
 @RequestMapping("/api/test-results")
@@ -19,6 +21,11 @@ public class TestResultController {
     
     private final TestResultService testResultService;
     
+    /**
+     * Konstruktor mit Dependency Injection.
+     * 
+     * @param testResultService Der Testergebnis-Service
+     */
     @Autowired
     public TestResultController(TestResultService testResultService) {
         this.testResultService = testResultService;
@@ -85,26 +92,28 @@ public class TestResultController {
     
     /**
      * Erstellt ein neues Testergebnis.
+     * Die Eingabedaten werden automatisch validiert.
      * 
-     * @param testResultDTO Die Testergebnisdaten
+     * @param testResultDTO Die Testergebnisdaten (validiert)
      * @return Das erstellte Testergebnis
      */
     @PostMapping
-    public ResponseEntity<TestResultDTO> createTestResult(@RequestBody TestResultDTO testResultDTO) {
+    public ResponseEntity<TestResultDTO> createTestResult(@Valid @RequestBody TestResultDTO testResultDTO) {
         TestResultDTO createdTestResult = testResultService.createTestResult(testResultDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTestResult);
     }
     
     /**
      * Aktualisiert ein bestehendes Testergebnis.
+     * Die Eingabedaten werden automatisch validiert.
      * 
      * @param id Die Testergebnis-ID
-     * @param testResultDTO Die neuen Testergebnisdaten
+     * @param testResultDTO Die neuen Testergebnisdaten (validiert)
      * @return Das aktualisierte Testergebnis
      */
     @PutMapping("/{id}")
     public ResponseEntity<TestResultDTO> updateTestResult(@PathVariable Long id, 
-                                                          @RequestBody TestResultDTO testResultDTO) {
+                                                          @Valid @RequestBody TestResultDTO testResultDTO) {
         TestResultDTO updatedTestResult = testResultService.updateTestResult(id, testResultDTO);
         return ResponseEntity.ok(updatedTestResult);
     }

@@ -2,6 +2,7 @@ package com.iu.require4testing.controller;
 
 import com.iu.require4testing.dto.RequirementDTO;
 import com.iu.require4testing.service.RequirementService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * REST-Controller für Anforderungs-Endpunkte.
  * Bietet CRUD-Operationen für Anforderungen über die REST-API.
+ * Implementiert Best Practices für RESTful Web Services.
  */
 @RestController
 @RequestMapping("/api/requirements")
@@ -19,6 +21,11 @@ public class RequirementController {
     
     private final RequirementService requirementService;
     
+    /**
+     * Konstruktor mit Dependency Injection.
+     * 
+     * @param requirementService Der Anforderungs-Service
+     */
     @Autowired
     public RequirementController(RequirementService requirementService) {
         this.requirementService = requirementService;
@@ -73,26 +80,28 @@ public class RequirementController {
     
     /**
      * Erstellt eine neue Anforderung.
+     * Die Eingabedaten werden automatisch validiert.
      * 
-     * @param requirementDTO Die Anforderungsdaten
+     * @param requirementDTO Die Anforderungsdaten (validiert)
      * @return Die erstellte Anforderung
      */
     @PostMapping
-    public ResponseEntity<RequirementDTO> createRequirement(@RequestBody RequirementDTO requirementDTO) {
+    public ResponseEntity<RequirementDTO> createRequirement(@Valid @RequestBody RequirementDTO requirementDTO) {
         RequirementDTO createdRequirement = requirementService.createRequirement(requirementDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRequirement);
     }
     
     /**
      * Aktualisiert eine bestehende Anforderung.
+     * Die Eingabedaten werden automatisch validiert.
      * 
      * @param id Die Anforderungs-ID
-     * @param requirementDTO Die neuen Anforderungsdaten
+     * @param requirementDTO Die neuen Anforderungsdaten (validiert)
      * @return Die aktualisierte Anforderung
      */
     @PutMapping("/{id}")
     public ResponseEntity<RequirementDTO> updateRequirement(@PathVariable Long id, 
-                                                            @RequestBody RequirementDTO requirementDTO) {
+                                                            @Valid @RequestBody RequirementDTO requirementDTO) {
         RequirementDTO updatedRequirement = requirementService.updateRequirement(id, requirementDTO);
         return ResponseEntity.ok(updatedRequirement);
     }

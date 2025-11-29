@@ -1,19 +1,37 @@
 package com.iu.require4testing.dto;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 import java.time.LocalDateTime;
 
 /**
  * Data Transfer Object für Testergebnisse.
  * Wird für die API-Kommunikation verwendet.
+ * Enthält Validierungsregeln gemäß Jakarta Bean Validation.
  */
 public class TestResultDTO {
     
     private Long id;
+    
+    @NotNull(message = "Die Testfall-ID muss angegeben werden")
     private Long testCaseId;
+    
+    @NotNull(message = "Die Testlauf-ID muss angegeben werden")
     private Long testRunId;
+    
+    @NotNull(message = "Die Tester-ID muss angegeben werden")
     private Long testerId;
+    
+    @NotNull(message = "Der Status muss angegeben werden")
+    @Pattern(regexp = "^(PASSED|FAILED|BLOCKED|SKIPPED|NOT_EXECUTED)$", 
+             message = "Status muss PASSED, FAILED, BLOCKED, SKIPPED oder NOT_EXECUTED sein")
     private String status;
+    
+    @Size(max = 10000, message = "Die Notizen dürfen maximal 10000 Zeichen lang sein")
     private String notes;
+    
     private LocalDateTime executedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

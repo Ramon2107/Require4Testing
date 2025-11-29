@@ -1,19 +1,36 @@
 package com.iu.require4testing.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.time.LocalDateTime;
 
 /**
  * Data Transfer Object für Testfälle.
  * Wird für die API-Kommunikation verwendet.
+ * Enthält Validierungsregeln gemäß Jakarta Bean Validation.
  */
 public class TestCaseDTO {
     
     private Long id;
+    
+    @NotBlank(message = "Der Name darf nicht leer sein")
+    @Size(min = 1, max = 500, message = "Der Name muss zwischen 1 und 500 Zeichen lang sein")
     private String name;
+    
+    @Size(max = 10000, message = "Die Beschreibung darf maximal 10000 Zeichen lang sein")
     private String description;
+    
+    @Size(max = 50000, message = "Die Testschritte dürfen maximal 50000 Zeichen lang sein")
     private String testSteps;
+    
+    @NotNull(message = "Die Anforderungs-ID muss angegeben werden")
     private Long requirementId;
+    
+    @NotNull(message = "Der Ersteller muss angegeben werden")
     private Long createdBy;
+    
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     

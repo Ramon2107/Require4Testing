@@ -2,6 +2,7 @@ package com.iu.require4testing.controller;
 
 import com.iu.require4testing.dto.TestCaseDTO;
 import com.iu.require4testing.service.TestCaseService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * REST-Controller für Testfall-Endpunkte.
  * Bietet CRUD-Operationen für Testfälle über die REST-API.
+ * Implementiert Best Practices für RESTful Web Services.
  */
 @RestController
 @RequestMapping("/api/test-cases")
@@ -19,6 +21,11 @@ public class TestCaseController {
     
     private final TestCaseService testCaseService;
     
+    /**
+     * Konstruktor mit Dependency Injection.
+     * 
+     * @param testCaseService Der Testfall-Service
+     */
     @Autowired
     public TestCaseController(TestCaseService testCaseService) {
         this.testCaseService = testCaseService;
@@ -85,26 +92,28 @@ public class TestCaseController {
     
     /**
      * Erstellt einen neuen Testfall.
+     * Die Eingabedaten werden automatisch validiert.
      * 
-     * @param testCaseDTO Die Testfalldaten
+     * @param testCaseDTO Die Testfalldaten (validiert)
      * @return Der erstellte Testfall
      */
     @PostMapping
-    public ResponseEntity<TestCaseDTO> createTestCase(@RequestBody TestCaseDTO testCaseDTO) {
+    public ResponseEntity<TestCaseDTO> createTestCase(@Valid @RequestBody TestCaseDTO testCaseDTO) {
         TestCaseDTO createdTestCase = testCaseService.createTestCase(testCaseDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTestCase);
     }
     
     /**
      * Aktualisiert einen bestehenden Testfall.
+     * Die Eingabedaten werden automatisch validiert.
      * 
      * @param id Die Testfall-ID
-     * @param testCaseDTO Die neuen Testfalldaten
+     * @param testCaseDTO Die neuen Testfalldaten (validiert)
      * @return Der aktualisierte Testfall
      */
     @PutMapping("/{id}")
     public ResponseEntity<TestCaseDTO> updateTestCase(@PathVariable Long id, 
-                                                      @RequestBody TestCaseDTO testCaseDTO) {
+                                                      @Valid @RequestBody TestCaseDTO testCaseDTO) {
         TestCaseDTO updatedTestCase = testCaseService.updateTestCase(id, testCaseDTO);
         return ResponseEntity.ok(updatedTestCase);
     }

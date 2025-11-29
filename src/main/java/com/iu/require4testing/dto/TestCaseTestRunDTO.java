@@ -1,15 +1,24 @@
 package com.iu.require4testing.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 /**
  * Data Transfer Object für Testfall-Testlauf-Zuordnungen.
  * Wird für die API-Kommunikation verwendet, um Testfälle einem Testlauf
  * und einem Tester zuzuordnen.
+ * Enthält Validierungsregeln gemäß Jakarta Bean Validation.
  */
 public class TestCaseTestRunDTO {
     
     private Long id;
+    
+    @NotNull(message = "Die Testfall-ID muss angegeben werden")
     private Long testCaseId;
+    
+    @NotNull(message = "Die Testlauf-ID muss angegeben werden")
     private Long testRunId;
+    
+    @NotNull(message = "Die Tester-ID muss angegeben werden")
     private Long testerId;
     
     /**

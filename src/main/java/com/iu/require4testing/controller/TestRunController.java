@@ -2,6 +2,7 @@ package com.iu.require4testing.controller;
 
 import com.iu.require4testing.dto.TestRunDTO;
 import com.iu.require4testing.service.TestRunService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * REST-Controller für Testlauf-Endpunkte.
  * Bietet CRUD-Operationen für Testläufe über die REST-API.
+ * Implementiert Best Practices für RESTful Web Services.
  */
 @RestController
 @RequestMapping("/api/test-runs")
@@ -19,6 +21,11 @@ public class TestRunController {
     
     private final TestRunService testRunService;
     
+    /**
+     * Konstruktor mit Dependency Injection.
+     * 
+     * @param testRunService Der Testlauf-Service
+     */
     @Autowired
     public TestRunController(TestRunService testRunService) {
         this.testRunService = testRunService;
@@ -73,26 +80,28 @@ public class TestRunController {
     
     /**
      * Erstellt einen neuen Testlauf.
+     * Die Eingabedaten werden automatisch validiert.
      * 
-     * @param testRunDTO Die Testlaufdaten
+     * @param testRunDTO Die Testlaufdaten (validiert)
      * @return Der erstellte Testlauf
      */
     @PostMapping
-    public ResponseEntity<TestRunDTO> createTestRun(@RequestBody TestRunDTO testRunDTO) {
+    public ResponseEntity<TestRunDTO> createTestRun(@Valid @RequestBody TestRunDTO testRunDTO) {
         TestRunDTO createdTestRun = testRunService.createTestRun(testRunDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTestRun);
     }
     
     /**
      * Aktualisiert einen bestehenden Testlauf.
+     * Die Eingabedaten werden automatisch validiert.
      * 
      * @param id Die Testlauf-ID
-     * @param testRunDTO Die neuen Testlaufdaten
+     * @param testRunDTO Die neuen Testlaufdaten (validiert)
      * @return Der aktualisierte Testlauf
      */
     @PutMapping("/{id}")
     public ResponseEntity<TestRunDTO> updateTestRun(@PathVariable Long id, 
-                                                    @RequestBody TestRunDTO testRunDTO) {
+                                                    @Valid @RequestBody TestRunDTO testRunDTO) {
         TestRunDTO updatedTestRun = testRunService.updateTestRun(id, testRunDTO);
         return ResponseEntity.ok(updatedTestRun);
     }
