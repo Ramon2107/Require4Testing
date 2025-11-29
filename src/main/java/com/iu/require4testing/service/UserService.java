@@ -5,6 +5,7 @@ import com.iu.require4testing.entity.User;
 import com.iu.require4testing.exception.ResourceNotFoundException;
 import com.iu.require4testing.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +21,12 @@ import java.util.stream.Collectors;
 public class UserService {
     
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
     
     /**
@@ -65,6 +68,7 @@ public class UserService {
     
     /**
      * Erstellt einen neuen Benutzer.
+     * Das Passwort wird mit BCrypt gehasht, bevor es gespeichert wird.
      * 
      * @param userDTO Die Benutzerdaten
      * @return Das erstellte Benutzer-DTO
@@ -84,6 +88,7 @@ public class UserService {
     
     /**
      * Aktualisiert einen bestehenden Benutzer.
+     * Falls ein neues Passwort angegeben wird, wird es mit BCrypt gehasht.
      * 
      * @param id Die Benutzer-ID
      * @param userDTO Die neuen Benutzerdaten
@@ -97,7 +102,8 @@ public class UserService {
         existingUser.setUsername(userDTO.getUsername());
         existingUser.setEmail(userDTO.getEmail());
         if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
-            existingUser.setPassword(userDTO.getPassword());
+            // Passwort wird mit BCrypt gehasht, bevor es gespeichert wird
+            existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         }
         if (userDTO.getRole() != null) {
             existingUser.setRole(userDTO.getRole());
@@ -122,15 +128,17 @@ public class UserService {
     
     /**
      * Konvertiert eine User-Entity in ein UserDTO.
+     * Das Passwort wird aus Sicherheitsgründen nicht in das DTO übertragen.
      * 
      * @param user Die User-Entity
-     * @return Das UserDTO
+     * @return Das UserDTO (ohne Passwort)
      */
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
+        // Passwort wird aus Sicherheitsgründen nicht zurückgegeben
         dto.setRole(user.getRole());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
@@ -139,14 +147,16 @@ public class UserService {
     
     /**
      * Konvertiert ein UserDTO in eine User-Entity.
+     * Das Passwort wird mit BCrypt gehasht.
      * 
      * @param dto Das UserDTO
-     * @return Die User-Entity
+     * @return Die User-Entity mit gehashtem Passwort
      */
     private User convertToEntity(UserDTO dto) {
         User user = new User();
         user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword());
+        // Passwort wird mit BCrypt gehasht, bevor es gespeichert wird
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setEmail(dto.getEmail());
         user.setRole(dto.getRole() != null ? dto.getRole() : "USER");
         return user;

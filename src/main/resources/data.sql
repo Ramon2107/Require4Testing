@@ -1,12 +1,14 @@
 -- Require4Testing Beispieldaten
 -- Diese Datei enthält initiale Testdaten für die Anwendung
+-- Hinweis: Die Passwörter sind mit BCrypt gehasht. Die Klartextpasswörter sind:
+-- admin: admin123, tester1: test123, tester2: test123, manager: manager123
 
--- Benutzer einfügen
+-- Benutzer einfügen (Passwörter sind BCrypt-gehasht)
 INSERT INTO users (username, password, email, role, created_at, updated_at) VALUES
-('admin', 'admin123', 'admin@require4testing.de', 'ADMIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('tester1', 'test123', 'tester1@require4testing.de', 'TESTER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('tester2', 'test123', 'tester2@require4testing.de', 'TESTER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('manager', 'manager123', 'manager@require4testing.de', 'MANAGER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'admin@require4testing.de', 'ADMIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('tester1', '$2a$10$7PtcjEnWb/ZkgyXyxY1/Jev5OlK4sJ0mJdBw1iqFKz7yJn8N7OeKe', 'tester1@require4testing.de', 'TESTER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('tester2', '$2a$10$7PtcjEnWb/ZkgyXyxY1/Jev5OlK4sJ0mJdBw1iqFKz7yJn8N7OeKe', 'tester2@require4testing.de', 'TESTER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('manager', '$2a$10$rDmFN6YpV.nElLlCW/rg0ezdIz3K5KWVy7H8r8e7/D3qB4Q1mN0PW', 'manager@require4testing.de', 'MANAGER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Anforderungen einfügen
 INSERT INTO requirements (name, description, created_by, created_at, updated_at) VALUES
