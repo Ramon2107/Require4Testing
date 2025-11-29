@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST-Controller für Testfall-Testlauf-Zuordnungen.
@@ -43,7 +42,7 @@ public class TestCaseTestRunController {
         List<TestCaseTestRunDTO> assignments = testCaseTestRunService.getAllTestCaseTestRuns()
                 .stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(assignments);
     }
     
@@ -70,7 +69,7 @@ public class TestCaseTestRunController {
         List<TestCaseTestRunDTO> assignments = testCaseTestRunService.getByTestCaseId(testCaseId)
                 .stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(assignments);
     }
     
@@ -85,7 +84,7 @@ public class TestCaseTestRunController {
         List<TestCaseTestRunDTO> assignments = testCaseTestRunService.getByTestRunId(testRunId)
                 .stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(assignments);
     }
     
@@ -101,7 +100,7 @@ public class TestCaseTestRunController {
         List<TestCaseTestRunDTO> assignments = testCaseTestRunService.getByTesterId(testerId)
                 .stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(assignments);
     }
     
