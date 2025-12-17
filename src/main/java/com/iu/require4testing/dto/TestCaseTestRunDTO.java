@@ -1,115 +1,123 @@
 package com.iu.require4testing.dto;
 
-import jakarta.validation.constraints.NotNull;
-
 /**
- * Data Transfer Object für Testfall-Testlauf-Zuordnungen.
- * Wird für die API-Kommunikation verwendet, um Testfälle einem Testlauf
- * und einem Tester zuzuordnen.
- * Enthält Validierungsregeln gemäß Jakarta Bean Validation.
+ * Data Transfer Object (DTO) für die Zuordnung von Testfällen zu Testläufen (TestCaseTestRun).
+ * <p>
+ * Dieses DTO dient dem Datenaustausch über die REST-Schnittstelle und zwischen den Schichten.
+ * Es kapselt die Informationen einer Testausführung, wie die IDs der beteiligten Entitäten
+ * und den aktuellen Status.
+ * </p>
+ *
+ * @author Require4Testing Team
+ * @version 1.0.0
  */
 public class TestCaseTestRunDTO {
-    
+
+    /**
+     * Die eindeutige Identifikationsnummer der Zuordnung.
+     * Dient als Primärschlüssel.
+     */
     private Long id;
-    
-    @NotNull(message = "Die Testfall-ID muss angegeben werden")
+
+    /**
+     * Die ID des zugeordneten Testfalls (TestCase).
+     * Referenziert den Testfall, der in diesem Lauf ausgeführt wird.
+     */
     private Long testCaseId;
-    
-    @NotNull(message = "Die Testlauf-ID muss angegeben werden")
+
+    /**
+     * Die ID des zugehörigen Testlaufs (TestRun).
+     * Referenziert den Testlauf, zu dem diese Ausführung gehört.
+     */
     private Long testRunId;
-    
-    @NotNull(message = "Die Tester-ID muss angegeben werden")
+
+    /**
+     * Die ID des zugewiesenen Testers (User).
+     * Referenziert den Benutzer, der den Test durchführt. Kann {@code null} sein.
+     */
     private Long testerId;
-    
+
+    /**
+     * Der aktuelle Status der Testdurchführung.
+     * Typische Werte: "OPEN" (Offen), "PASSED" (Bestanden), "FAILED" (Fehlgeschlagen).
+     */
+    private String status;
+
     /**
      * Standardkonstruktor.
+     * Notwendig für die Instanziierung durch Frameworks.
      */
     public TestCaseTestRunDTO() {}
-    
-    /**
-     * Konstruktor mit allen Feldern.
-     * 
-     * @param id Zuordnungs-ID
-     * @param testCaseId ID des Testfalls
-     * @param testRunId ID des Testlaufs
-     * @param testerId ID des zugewiesenen Testers
-     */
-    public TestCaseTestRunDTO(Long id, Long testCaseId, Long testRunId, Long testerId) {
-        this.id = id;
-        this.testCaseId = testCaseId;
-        this.testRunId = testRunId;
-        this.testerId = testerId;
-    }
-    
+
+    // --- Getter und Setter ---
+
     /**
      * Gibt die ID der Zuordnung zurück.
-     * 
-     * @return Die Zuordnungs-ID
+     *
+     * @return Die ID als Long.
      */
-    public Long getId() {
-        return id;
-    }
-    
+    public Long getId() { return id; }
+
     /**
      * Setzt die ID der Zuordnung.
-     * 
-     * @param id Die Zuordnungs-ID
+     *
+     * @param id Die zu setzende ID.
      */
-    public void setId(Long id) {
-        this.id = id;
-    }
-    
+    public void setId(Long id) { this.id = id; }
+
     /**
-     * Gibt die ID des Testfalls zurück.
-     * 
-     * @return Die Testfall-ID
+     * Gibt die ID des verknüpften Testfalls zurück.
+     *
+     * @return Die Testfall-ID als Long.
      */
-    public Long getTestCaseId() {
-        return testCaseId;
-    }
-    
+    public Long getTestCaseId() { return testCaseId; }
+
     /**
-     * Setzt die ID des Testfalls.
-     * 
-     * @param testCaseId Die Testfall-ID
+     * Setzt die ID des verknüpften Testfalls.
+     *
+     * @param testCaseId Die zu setzende Testfall-ID.
      */
-    public void setTestCaseId(Long testCaseId) {
-        this.testCaseId = testCaseId;
-    }
-    
+    public void setTestCaseId(Long testCaseId) { this.testCaseId = testCaseId; }
+
     /**
-     * Gibt die ID des Testlaufs zurück.
-     * 
-     * @return Die Testlauf-ID
+     * Gibt die ID des verknüpften Testlaufs zurück.
+     *
+     * @return Die Testlauf-ID als Long.
      */
-    public Long getTestRunId() {
-        return testRunId;
-    }
-    
+    public Long getTestRunId() { return testRunId; }
+
     /**
-     * Setzt die ID des Testlaufs.
-     * 
-     * @param testRunId Die Testlauf-ID
+     * Setzt die ID des verknüpften Testlaufs.
+     *
+     * @param testRunId Die zu setzende Testlauf-ID.
      */
-    public void setTestRunId(Long testRunId) {
-        this.testRunId = testRunId;
-    }
-    
+    public void setTestRunId(Long testRunId) { this.testRunId = testRunId; }
+
     /**
      * Gibt die ID des zugewiesenen Testers zurück.
-     * 
-     * @return Die Tester-ID
+     *
+     * @return Die Tester-ID als Long oder null.
      */
-    public Long getTesterId() {
-        return testerId;
-    }
-    
+    public Long getTesterId() { return testerId; }
+
     /**
      * Setzt die ID des zugewiesenen Testers.
-     * 
-     * @param testerId Die Tester-ID
+     *
+     * @param testerId Die zu setzende Tester-ID.
      */
-    public void setTesterId(Long testerId) {
-        this.testerId = testerId;
-    }
+    public void setTesterId(Long testerId) { this.testerId = testerId; }
+
+    /**
+     * Gibt den aktuellen Status der Durchführung zurück.
+     *
+     * @return Der Status als String.
+     */
+    public String getStatus() { return status; }
+
+    /**
+     * Setzt den aktuellen Status der Durchführung.
+     *
+     * @param status Der zu setzende Status.
+     */
+    public void setStatus(String status) { this.status = status; }
 }

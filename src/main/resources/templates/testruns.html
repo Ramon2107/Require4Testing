@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!--
+  Übersichtsseite für Testläufe.
+
+  @module Templates
+  @author Require4Testing Team
+-->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:replace="~{layout :: layout(~{::content})}">
+    <div th:fragment="content">
+        <div class="row">
+            <!-- Neuer Testlauf -->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">Neuer Testlauf</div>
+                    <div class="card-body">
+                        <form th:action="@{/ui/testruns}" th:object="${newTestRun}" method="post">
+                            <div class="mb-3">
+                                <label>Name des Laufs</label>
+                                <input type="text" class="form-control" th:field="*{name}" required placeholder="Sprint X Test">
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Zu testende Anforderung</label>
+                                <select name="requirementId" class="form-select" required>
+                                    <option value="" selected disabled>Anforderung wählen...</option>
+                                    <option th:each="req : ${requirements}"
+                                            th:value="${req.id}"
+                                            th:text="'[' + ${req.readableId} + '] ' + ${req.name}">
+                                        [REQ-2025-001] Login
+                                    </option>
+                                </select>
+                                <div class="form-text small">Ein Testlauf prüft genau eine Anforderung.</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">Anlegen</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste -->
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header">Aktive Testläufe</div>
+                    <div class="card-body">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Anforderung</th>
+                                <th>Status</th>
+                                <th>Aktion</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="tr : ${testRuns}">
+                                <td><span class="badge bg-light text-dark border" th:text="${tr.readableId != null ? tr.readableId : 'TR-' + tr.id}">TR-2025-0000</span></td>
+                                <td th:text="${tr.name}">Sprint 1</td>
+                                <td>
+                                    <!-- Fix: Richtige Anzeige der Requirement ID -->
+                                    <span th:if="${tr.requirement != null}" class="badge bg-secondary"
+                                          th:text="${tr.requirement.readableId != null ? tr.requirement.readableId : 'REQ-' + tr.requirement.id}">REQ-1</span>
+                                </td>
+                                <td>
+                                    <span th:if="${tr.status == 'SUCCESSFUL'}" class="badge bg-success">SUCCESSFUL</span>
+                                    <span th:if="${tr.status == 'FAILED'}" class="badge bg-danger">FAILED</span>
+                                    <span th:if="${tr.status == 'IN_PROGRESS'}" class="badge bg-warning text-dark">IN PROGRESS</span>
+                                    <span th:if="${tr.status == 'PLANNING'}" class="badge bg-secondary">PLANNING</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/ui/testruns/{id}(id=${tr.id})}" class="btn btn-sm btn-outline-dark">Öffnen</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

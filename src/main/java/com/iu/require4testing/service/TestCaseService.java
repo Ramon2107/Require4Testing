@@ -2,168 +2,117 @@ package com.iu.require4testing.service;
 
 import com.iu.require4testing.dto.TestCaseDTO;
 import com.iu.require4testing.entity.TestCase;
-import com.iu.require4testing.exception.ResourceNotFoundException;
+import com.iu.require4testing.repository.RequirementRepository;
 import com.iu.require4testing.repository.TestCaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service für Testfall-Operationen.
- * Bietet Geschäftslogik für die Verwaltung von Testfällen.
+ * Service-Klasse für die Verwaltung von Testfällen (User Story 3).
+ *
+ * @author Require4Testing Team
+ * @version 1.0.0
  */
 @Service
-@Transactional
 public class TestCaseService {
-    
-    private final TestCaseRepository testCaseRepository;
-    
+
     @Autowired
-    public TestCaseService(TestCaseRepository testCaseRepository) {
-        this.testCaseRepository = testCaseRepository;
+    private TestCaseRepository repo;
+
+    @Autowired
+    private RequirementRepository reqRepo;
+
+    // --- Methoden für den UI Controller (Entity-basiert) ---
+
+    public List<TestCase> findAll() {
+        return repo.findAll();
     }
-    
-    /**
-     * Gibt alle Testfälle zurück.
-     * 
-     * @return Liste aller Testfälle als DTOs
-     */
+
+    public TestCase findById(Long id) {
+        return repo.findById(id).orElseThrow(() -> new RuntimeException("TestCase not found with id: " + id));
+    }
+
+    public TestCase save(TestCase tc) {
+        return repo.save(tc);
+    }
+
+    // --- Methoden für den REST Controller (DTO-basiert) ---
+
     public List<TestCaseDTO> getAllTestCases() {
-        return testCaseRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return repo.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
     }
-    
-    /**
-     * Findet einen Testfall anhand seiner ID.
-     * 
-     * @param id Die Testfall-ID
-     * @return Das Testfall-DTO
-     * @throws ResourceNotFoundException wenn der Testfall nicht gefunden wird
-     */
+
     public TestCaseDTO getTestCaseById(Long id) {
-        TestCase testCase = testCaseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Testfall", "ID", id));
-        return convertToDTO(testCase);
+        return convertToDTO(findById(id));
     }
-    
-    /**
-     * Findet Testfälle einer bestimmten Anforderung.
-     * 
-     * @param requirementId Die ID der Anforderung
-     * @return Liste der Testfälle
-     */
-    public List<TestCaseDTO> getTestCasesByRequirement(Long requirementId) {
-        return testCaseRepository.findByRequirementId(requirementId).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    /**
-     * Findet Testfälle eines bestimmten Erstellers.
-     * 
-     * @param createdBy Die ID des Erstellers
-     * @return Liste der Testfälle
-     */
-    public List<TestCaseDTO> getTestCasesByCreator(Long createdBy) {
-        return testCaseRepository.findByCreatedBy(createdBy).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    /**
-     * Sucht Testfälle nach Name.
-     * 
-     * @param name Der Suchbegriff
-     * @return Liste der gefundenen Testfälle
-     */
+
     public List<TestCaseDTO> searchTestCasesByName(String name) {
-        return testCaseRepository.findByNameContainingIgnoreCase(name).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return repo.findByNameContainingIgnoreCase(name).stream()
+                .map(this::convertToDTO).collect(Collectors.toList());
     }
-    
-    /**
-     * Erstellt einen neuen Testfall.
-     * 
-     * @param testCaseDTO Die Testfalldaten
-     * @return Das erstellte Testfall-DTO
-     */
-    public TestCaseDTO createTestCase(TestCaseDTO testCaseDTO) {
-        TestCase testCase = convertToEntity(testCaseDTO);
-        TestCase savedTestCase = testCaseRepository.save(testCase);
-        return convertToDTO(savedTestCase);
+
+    public List<TestCaseDTO> getTestCasesByRequirement(Long reqId) {
+        return repo.findByRequirement_Id(reqId).stream()
+                .map(this::convertToDTO).collect(Collectors.toList());
     }
-    
-    /**
-     * Aktualisiert einen bestehenden Testfall.
-     * 
-     * @param id Die Testfall-ID
-     * @param testCaseDTO Die neuen Testfalldaten
-     * @return Das aktualisierte Testfall-DTO
-     * @throws ResourceNotFoundException wenn der Testfall nicht gefunden wird
-     */
-    public TestCaseDTO updateTestCase(Long id, TestCaseDTO testCaseDTO) {
-        TestCase existingTestCase = testCaseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Testfall", "ID", id));
-        
-        existingTestCase.setName(testCaseDTO.getName());
-        existingTestCase.setDescription(testCaseDTO.getDescription());
-        existingTestCase.setTestSteps(testCaseDTO.getTestSteps());
-        existingTestCase.setRequirementId(testCaseDTO.getRequirementId());
-        
-        TestCase updatedTestCase = testCaseRepository.save(existingTestCase);
-        return convertToDTO(updatedTestCase);
+
+    public List<TestCaseDTO> getTestCasesByCreator(Long creatorId) {
+        return repo.findByCreatedBy(creatorId).stream()
+                .map(this::convertToDTO).collect(Collectors.toList());
     }
-    
-    /**
-     * Löscht einen Testfall.
-     * 
-     * @param id Die Testfall-ID
-     * @throws ResourceNotFoundException wenn der Testfall nicht gefunden wird
-     */
-    public void deleteTestCase(Long id) {
-        if (!testCaseRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Testfall", "ID", id);
+
+    public TestCaseDTO createTestCase(TestCaseDTO dto) {
+        TestCase entity = convertToEntity(dto);
+
+        if(dto.getRequirementId() != null) {
+            entity.setRequirement(reqRepo.findById(dto.getRequirementId()).orElseThrow(() -> new RuntimeException("Requirement not found")));
         }
-        testCaseRepository.deleteById(id);
+
+        entity = repo.save(entity);
+        return convertToDTO(entity);
     }
-    
-    /**
-     * Konvertiert eine TestCase-Entity in ein TestCaseDTO.
-     * 
-     * @param testCase Die TestCase-Entity
-     * @return Das TestCaseDTO
-     */
-    private TestCaseDTO convertToDTO(TestCase testCase) {
+
+    public TestCaseDTO updateTestCase(Long id, TestCaseDTO dto) {
+        TestCase existing = findById(id);
+
+        existing.setName(dto.getName());
+        existing.setDescription(dto.getDescription());
+        existing.setTestSteps(dto.getTestSteps());
+
+        if(dto.getRequirementId() != null) {
+            existing.setRequirement(reqRepo.findById(dto.getRequirementId()).orElseThrow(() -> new RuntimeException("Requirement not found")));
+        }
+
+        TestCase saved = repo.save(existing);
+        return convertToDTO(saved);
+    }
+
+    public void deleteTestCase(Long id) {
+        repo.deleteById(id);
+    }
+
+    // --- Hilfsmethoden für Mapping ---
+
+    private TestCaseDTO convertToDTO(TestCase entity) {
         TestCaseDTO dto = new TestCaseDTO();
-        dto.setId(testCase.getId());
-        dto.setName(testCase.getName());
-        dto.setDescription(testCase.getDescription());
-        dto.setTestSteps(testCase.getTestSteps());
-        dto.setRequirementId(testCase.getRequirementId());
-        dto.setCreatedBy(testCase.getCreatedBy());
-        dto.setCreatedAt(testCase.getCreatedAt());
-        dto.setUpdatedAt(testCase.getUpdatedAt());
+        dto.setId(entity.getId());
+        dto.setName(entity.getName());
+        dto.setDescription(entity.getDescription());
+        dto.setTestSteps(entity.getTestSteps());
+        dto.setRequirementId(entity.getRequirementId());
+        dto.setCreatedBy(entity.getCreatedBy());
         return dto;
     }
-    
-    /**
-     * Konvertiert ein TestCaseDTO in eine TestCase-Entity.
-     * 
-     * @param dto Das TestCaseDTO
-     * @return Die TestCase-Entity
-     */
+
     private TestCase convertToEntity(TestCaseDTO dto) {
-        TestCase testCase = new TestCase();
-        testCase.setName(dto.getName());
-        testCase.setDescription(dto.getDescription());
-        testCase.setTestSteps(dto.getTestSteps());
-        testCase.setRequirementId(dto.getRequirementId());
-        testCase.setCreatedBy(dto.getCreatedBy());
-        return testCase;
+        TestCase entity = new TestCase();
+        entity.setName(dto.getName());
+        entity.setDescription(dto.getDescription());
+        entity.setTestSteps(dto.getTestSteps());
+        entity.setCreatedBy(dto.getCreatedBy() != null ? dto.getCreatedBy() : 1L); // Default User
+        return entity;
     }
 }

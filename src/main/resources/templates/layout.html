@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8">
+    <title>Require4Testing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <i class="bi bi-clipboard-check me-2 fs-4"></i>
+            Require4Testing
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="/ui/requirements">Anforderungen</a></li>
+                <li class="nav-item"><a class="nav-link" href="/ui/testruns">Testläufe</a></li>
+            </ul>
+            <div class="d-flex text-white align-items-center">
+                <span th:if="${session.currentUser != null}" class="me-3 d-flex align-items-center">
+                    <i class="bi bi-person-circle me-2"></i>
+                    <span th:text="${session.currentUser.username}" class="fw-bold">User</span>
+
+                    <span class="badge bg-light text-dark ms-2" th:switch="${session.currentUser.role}">
+                        <span th:case="'ADMIN'">Administrator</span>
+                        <span th:case="'MANAGER'">Testmanager</span>
+                        <span th:case="'CREATOR'">Testfallersteller</span>
+                        <span th:case="'REQUIREMENT_ENGINEER'">Req. Engineer</span>
+                        <span th:case="'TESTER'">Tester</span>
+                        <span th:case="*">Benutzer</span>
+                    </span>
+                </span>
+                <a th:if="${session.currentUser != null}" href="/logout" class="btn btn-sm btn-outline-light ms-3">Logout</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${errorMessage}">Error</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${successMessage}">Success</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:replace="${content}"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -4,28 +4,15 @@ import com.iu.require4testing.entity.Requirement;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 /**
- * Repository für Anforderungs-Entitäten.
- * Bietet CRUD-Operationen und benutzerdefinierte Abfragen für Anforderungen.
+ * Repository für Requirements.
  */
 @Repository
 public interface RequirementRepository extends JpaRepository<Requirement, Long> {
-    
+
     /**
-     * Findet alle Anforderungen eines bestimmten Erstellers.
-     * 
-     * @param createdBy Die ID des Erstellers
-     * @return Liste der Anforderungen
+     * Findet die letzte Anforderung mit einem bestimmten ID-Präfix (z.B. "REQ-2025-").
+     * Wird benötigt, um die nächste laufende Nummer zu ermitteln.
      */
-    List<Requirement> findByCreatedBy(Long createdBy);
-    
-    /**
-     * Findet Anforderungen, deren Name einen bestimmten Suchbegriff enthält.
-     * 
-     * @param name Der Suchbegriff
-     * @return Liste der gefundenen Anforderungen
-     */
-    List<Requirement> findByNameContainingIgnoreCase(String name);
+    Requirement findTopByReadableIdStartingWithOrderByReadableIdDesc(String prefix);
 }

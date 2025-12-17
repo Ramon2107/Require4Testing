@@ -2,163 +2,121 @@ package com.iu.require4testing.service;
 
 import com.iu.require4testing.dto.UserDTO;
 import com.iu.require4testing.entity.User;
-import com.iu.require4testing.exception.ResourceNotFoundException;
 import com.iu.require4testing.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service für Benutzer-Operationen.
- * Bietet Geschäftslogik für die Verwaltung von Benutzern.
+ * Service-Klasse für die Verwaltung von Benutzern (Testern/Managern).
+ * Dient als Schnittstelle zwischen Controller und Repository.
+ * Stellt Methoden sowohl für die UI (Entity-basiert) als auch für die REST-API (DTO-basiert) bereit.
+ *
+ * @author Require4Testing Team
+ * @version 1.0.0
  */
 @Service
-@Transactional
 public class UserService {
-    
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    
+
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-    
+    private UserRepository repo;
+
+    // --- UI Methoden (arbeiten direkt mit Entities) ---
+
     /**
-     * Gibt alle Benutzer zurück.
-     * 
-     * @return Liste aller Benutzer als DTOs
+     * Lädt alle Benutzer als Entities.
+     * @return Liste aller User
+     */
+    public List<User> findAll() { return repo.findAll(); }
+
+    /**
+     * Findet einen Benutzer anhand der ID.
+     * @param id User ID
+     * @return User Entity
+     * @throws RuntimeException wenn nicht gefunden
+     */
+    public User findById(Long id) {
+        return repo.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+
+    // --- REST Controller Methoden (arbeiten mit DTOs) ---
+
+    /**
+     * Gibt alle Benutzer als DTOs zurück.
+     * @return Liste von UserDTOs
      */
     public List<UserDTO> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return repo.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
-    
+
     /**
-     * Findet einen Benutzer anhand seiner ID.
-     * 
-     * @param id Die Benutzer-ID
-     * @return Das Benutzer-DTO
-     * @throws ResourceNotFoundException wenn der Benutzer nicht gefunden wird
+     * Holt einen Benutzer als DTO anhand der ID.
+     * @param id User ID
+     * @return UserDTO
      */
     public UserDTO getUserById(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Benutzer", "ID", id));
-        return convertToDTO(user);
+        return toDTO(findById(id));
     }
-    
+
     /**
-     * Findet einen Benutzer anhand seines Benutzernamens.
-     * 
+     * Sucht einen Benutzer anhand des Benutzernamens.
      * @param username Der Benutzername
-     * @return Das Benutzer-DTO
-     * @throws ResourceNotFoundException wenn der Benutzer nicht gefunden wird
+     * @return UserDTO oder null
      */
     public UserDTO getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Benutzer", "Benutzername", username));
-        return convertToDTO(user);
+        return repo.findAll().stream()
+                .filter(u -> u.getUsername().equals(username))
+                .findFirst()
+                .map(this::toDTO)
+                .orElse(null);
     }
-    
+
     /**
-     * Erstellt einen neuen Benutzer.
-     * Das Passwort wird mit BCrypt gehasht, bevor es gespeichert wird.
-     * 
-     * @param userDTO Die Benutzerdaten
-     * @return Das erstellte Benutzer-DTO
+     * Erstellt einen neuen Benutzer aus einem DTO.
+     * @param dto Eingabe-DTO
+     * @return Erstelltes UserDTO
      */
-    public UserDTO createUser(UserDTO userDTO) {
-        if (userRepository.existsByUsername(userDTO.getUsername())) {
-            throw new IllegalArgumentException("Benutzername bereits vergeben");
-        }
-        if (userRepository.existsByEmail(userDTO.getEmail())) {
-            throw new IllegalArgumentException("E-Mail bereits vergeben");
-        }
-        
-        User user = convertToEntity(userDTO);
-        User savedUser = userRepository.save(user);
-        return convertToDTO(savedUser);
+    public UserDTO createUser(UserDTO dto) {
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        // Passwort Logik hier vereinfacht (normalerweise Hash)
+        user.setRole(dto.getRole());
+        return toDTO(repo.save(user));
     }
-    
+
     /**
-     * Aktualisiert einen bestehenden Benutzer.
-     * Falls ein neues Passwort angegeben wird, wird es mit BCrypt gehasht.
-     * 
-     * @param id Die Benutzer-ID
-     * @param userDTO Die neuen Benutzerdaten
-     * @return Das aktualisierte Benutzer-DTO
-     * @throws ResourceNotFoundException wenn der Benutzer nicht gefunden wird
+     * Aktualisiert einen Benutzer.
+     * @param id ID des Benutzers
+     * @param dto Update-Daten
+     * @return Aktualisiertes UserDTO
      */
-    public UserDTO updateUser(Long id, UserDTO userDTO) {
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Benutzer", "ID", id));
-        
-        existingUser.setUsername(userDTO.getUsername());
-        existingUser.setEmail(userDTO.getEmail());
-        if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
-            // Passwort wird mit BCrypt gehasht, bevor es gespeichert wird
-            existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        }
-        if (userDTO.getRole() != null) {
-            existingUser.setRole(userDTO.getRole());
-        }
-        
-        User updatedUser = userRepository.save(existingUser);
-        return convertToDTO(updatedUser);
+    public UserDTO updateUser(Long id, UserDTO dto) {
+        User user = findById(id);
+        user.setUsername(dto.getUsername());
+        user.setRole(dto.getRole());
+        return toDTO(repo.save(user));
     }
-    
+
     /**
      * Löscht einen Benutzer.
-     * 
-     * @param id Die Benutzer-ID
-     * @throws ResourceNotFoundException wenn der Benutzer nicht gefunden wird
+     * @param id ID des zu löschenden Benutzers
      */
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Benutzer", "ID", id);
-        }
-        userRepository.deleteById(id);
+        repo.deleteById(id);
     }
-    
+
     /**
-     * Konvertiert eine User-Entity in ein UserDTO.
-     * Das Passwort wird aus Sicherheitsgründen nicht in das DTO übertragen.
-     * 
-     * @param user Die User-Entity
-     * @return Das UserDTO (ohne Passwort)
+     * Hilfsmethode: Konvertiert Entity zu DTO.
+     * @param user User Entity
+     * @return UserDTO
      */
-    private UserDTO convertToDTO(User user) {
+    private UserDTO toDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        // Passwort wird aus Sicherheitsgründen nicht zurückgegeben
         dto.setRole(user.getRole());
-        dto.setCreatedAt(user.getCreatedAt());
-        dto.setUpdatedAt(user.getUpdatedAt());
         return dto;
-    }
-    
-    /**
-     * Konvertiert ein UserDTO in eine User-Entity.
-     * Das Passwort wird mit BCrypt gehasht.
-     * 
-     * @param dto Das UserDTO
-     * @return Die User-Entity mit gehashtem Passwort
-     */
-    private User convertToEntity(UserDTO dto) {
-        User user = new User();
-        user.setUsername(dto.getUsername());
-        // Passwort wird mit BCrypt gehasht, bevor es gespeichert wird
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        user.setEmail(dto.getEmail());
-        user.setRole(dto.getRole() != null ? dto.getRole() : "USER");
-        return user;
     }
 }

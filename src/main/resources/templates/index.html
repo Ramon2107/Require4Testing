@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!--
+  Dashboard (Startseite).
+  Zeigt benutzerspezifische Inhalte und Rolleninformationen an.
+
+  @module Templates
+  @author Require4Testing Team
+-->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:replace="~{layout :: layout(~{::content})}">
+    <div th:fragment="content">
+
+        <!-- Begrüßungs-Banner -->
+        <div class="p-5 mb-4 bg-white rounded-3 shadow-sm border">
+            <div class="container-fluid py-2">
+                <h1 class="display-5 fw-bold">
+                    Willkommen bei Require4Testing, <span class="text-primary" th:text="${user.username}">User</span>!
+                </h1>
+                <p class="col-md-8 fs-4 mt-3">
+                    Sie sind im System angemeldet als:
+                    <!-- Deutsche Rollenbezeichnungen -->
+                    <span class="badge bg-danger" th:if="${user.role == 'ADMIN'}">Administrator</span>
+                    <span class="badge bg-success" th:if="${user.role == 'MANAGER'}">Testmanager</span>
+                    <span class="badge bg-info text-dark" th:if="${user.role == 'CREATOR'}">Testfallersteller</span>
+                    <span class="badge bg-warning text-dark" th:if="${user.role == 'TESTER'}">Tester</span>
+                    <span class="badge bg-secondary" th:if="${user.role == 'REQUIREMENT_ENGINEER'}">Requirements Engineer</span>
+                </p>
+                <p class="text-muted">
+                    Hier finden Sie Ihre Aufgaben und Verwaltungsfunktionen.
+                </p>
+            </div>
+        </div>
+
+        <!-- Dashboard Bereich: Je nach Rolle unterschiedliche Widgets -->
+        <div class="row g-4">
+
+            <!-- 1. Widget für TESTER: Meine Aufgaben -->
+            <div th:if="${user.role == 'TESTER'}" class="col-12">
+                <div class="card shadow-sm h-100 border-warning">
+                    <div class="card-header bg-warning text-dark fw-bold">
+                        <i class="bi bi-list-task"></i> Meine offenen Testaufgaben
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(myTasks)}" class="text-muted text-center py-3">
+                            <i class="bi bi-check2-circle fs-1"></i><br>
+                            Keine offenen Aufgaben zugewiesen.
+                        </div>
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(myTasks)}">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Testlauf</th>
+                                    <th>Testfall</th>
+                                    <th>Status</th>
+                                    <th>Aktion</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="task : ${myTasks}">
+                                    <td th:text="${task.testRun.name}">Sprint 1</td>
+                                    <td th:text="${task.testCase.name}">Login Test</td>
+                                    <td><span class="badge bg-warning text-dark">OFFEN</span></td>
+                                    <td>
+                                        <a th:href="@{/ui/testruns/{id}(id=${task.testRun.id})}" class="btn btn-sm btn-primary">Ausführen</a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Widget für TESTMANAGER & ADMIN: Testruns -->
+            <div th:if="${user.role == 'MANAGER' or user.role == 'ADMIN'}" class="col-md-6">
+                <div class="card h-100 shadow-sm border-success">
+                    <div class="card-header bg-success text-white fw-bold">
+                        <i class="bi bi-kanban"></i> Testmanagement
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Testläufe & Planung</h5>
+                        <p class="card-text">Erstellen und verwalten Sie Testläufe und weisen Sie Tester zu.</p>
+                        <a href="/ui/testruns" class="btn btn-outline-success w-100">Zu den Testläufen</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Widget für REQUIREMENTS ENGINEER & ADMIN: Anforderungen -->
+            <div th:if="${user.role == 'REQUIREMENT_ENGINEER' or user.role == 'ADMIN'}" class="col-md-6">
+                <div class="card h-100 shadow-sm border-secondary">
+                    <div class="card-header bg-secondary text-white fw-bold">
+                        <i class="bi bi-file-earmark-text"></i> Requirements Engineering
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Anforderungen definieren</h5>
+                        <p class="card-text">Erstellen und bearbeiten Sie Anforderungen für das nächste Release.</p>
+                        <a href="/ui/requirements" class="btn btn-outline-secondary w-100">Zu den Anforderungen</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Widget für TESTFALLERSTELLER (Creator) & ADMIN & MANAGER & REQ_ENG -->
+            <div th:if="${user.role == 'CREATOR' or user.role == 'ADMIN' or user.role == 'MANAGER' or user.role == 'REQUIREMENT_ENGINEER'}" class="col-md-6">
+                <div class="card h-100 shadow-sm border-info">
+                    <div class="card-header bg-info text-dark fw-bold">
+                        <i class="bi bi-pencil-square"></i> Testdesign
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Testfälle spezifizieren</h5>
+                        <p class="card-text">Navigieren Sie zu Anforderungen, um dort Testfälle hinzuzufügen.</p>
+                        <a href="/ui/requirements" class="btn btn-outline-info w-100">Anforderungskatalog öffnen</a>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End Row -->
+    </div>
+</div>
+</body>
+</html>

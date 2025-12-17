@@ -1,182 +1,120 @@
 package com.iu.require4testing.controller;
 
 import com.iu.require4testing.dto.TestCaseTestRunDTO;
-import com.iu.require4testing.entity.TestCaseTestRun;
 import com.iu.require4testing.service.TestCaseTestRunService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 /**
- * REST-Controller für Testfall-Testlauf-Zuordnungen.
- * Ermöglicht das Zuordnen von Testfällen und Testern zu Testläufen.
- * Diese Funktion ist notwendig für Testmanager:innen, um Testfälle
- * und Tester:innen einem Testlauf zuzuweisen.
- * Implementiert Best Practices für RESTful Web Services.
+ * REST-Controller für die Verwaltung von Testfall-Ausführungen (TestCaseTestRuns).
+ * <p>
+ * Dieser Controller ermöglicht den Zugriff auf die Zwischentabelle, die Testfälle mit Testläufen verbindet.
+ * Er erlaubt das Abrufen, Erstellen, Aktualisieren und Löschen von Testausführungen sowie
+ * deren Statusverwaltung.
+ * </p>
+ *
+ * @author Require4Testing Team
+ * @version 1.0.0
  */
 @RestController
 @RequestMapping("/api/test-case-test-runs")
 public class TestCaseTestRunController {
-    
-    private final TestCaseTestRunService testCaseTestRunService;
-    
+
     /**
-     * Konstruktor mit Dependency Injection.
-     * 
-     * @param testCaseTestRunService Der Service für Testfall-Testlauf-Zuordnungen
+     * Der Service für die Geschäftslogik der Testausführungen.
      */
     @Autowired
-    public TestCaseTestRunController(TestCaseTestRunService testCaseTestRunService) {
-        this.testCaseTestRunService = testCaseTestRunService;
-    }
-    
+    private TestCaseTestRunService testCaseTestRunService;
+
     /**
-     * Gibt alle Testfall-Testlauf-Zuordnungen zurück.
-     * 
-     * @return Liste aller Zuordnungen
+     * Ruft alle Testfall-Ausführungen ab.
+     *
+     * @return Eine Liste aller TestCaseTestRunDTOs.
      */
     @GetMapping
     public ResponseEntity<List<TestCaseTestRunDTO>> getAllTestCaseTestRuns() {
-        List<TestCaseTestRunDTO> assignments = testCaseTestRunService.getAllTestCaseTestRuns()
-                .stream()
-                .map(this::convertToDTO)
-                .toList();
-        return ResponseEntity.ok(assignments);
+        return ResponseEntity.ok(testCaseTestRunService.getAllTestCaseTestRuns());
     }
-    
+
     /**
-     * Gibt eine Zuordnung anhand ihrer ID zurück.
-     * 
-     * @param id Die Zuordnungs-ID
-     * @return Die Zuordnung
+     * Ruft eine spezifische Testfall-Ausführung anhand ihrer ID ab.
+     *
+     * @param id Die ID der gesuchten Ausführung.
+     * @return Das gefundene DTO.
      */
     @GetMapping("/{id}")
     public ResponseEntity<TestCaseTestRunDTO> getTestCaseTestRunById(@PathVariable Long id) {
-        TestCaseTestRun assignment = testCaseTestRunService.getTestCaseTestRunById(id);
-        return ResponseEntity.ok(convertToDTO(assignment));
+        return ResponseEntity.ok(testCaseTestRunService.getTestCaseTestRunById(id));
     }
-    
+
     /**
-     * Gibt alle Zuordnungen für einen bestimmten Testfall zurück.
-     * 
-     * @param testCaseId Die ID des Testfalls
-     * @return Liste der Zuordnungen
+     * Findet alle Ausführungen für einen bestimmten Testfall.
+     *
+     * @param id Die ID des Testfalls.
+     * @return Eine Liste von DTOs.
      */
-    @GetMapping("/test-case/{testCaseId}")
-    public ResponseEntity<List<TestCaseTestRunDTO>> getByTestCaseId(@PathVariable Long testCaseId) {
-        List<TestCaseTestRunDTO> assignments = testCaseTestRunService.getByTestCaseId(testCaseId)
-                .stream()
-                .map(this::convertToDTO)
-                .toList();
-        return ResponseEntity.ok(assignments);
+    @GetMapping("/test-case/{id}")
+    public ResponseEntity<List<TestCaseTestRunDTO>> getByTestCaseId(@PathVariable Long id) {
+        return ResponseEntity.ok(testCaseTestRunService.getByTestCaseId(id));
     }
-    
+
     /**
-     * Gibt alle Zuordnungen für einen bestimmten Testlauf zurück.
-     * 
-     * @param testRunId Die ID des Testlaufs
-     * @return Liste der Zuordnungen
+     * Findet alle Testfall-Ausführungen innerhalb eines bestimmten Testlaufs.
+     *
+     * @param id Die ID des Testlaufs.
+     * @return Eine Liste von DTOs.
      */
-    @GetMapping("/test-run/{testRunId}")
-    public ResponseEntity<List<TestCaseTestRunDTO>> getByTestRunId(@PathVariable Long testRunId) {
-        List<TestCaseTestRunDTO> assignments = testCaseTestRunService.getByTestRunId(testRunId)
-                .stream()
-                .map(this::convertToDTO)
-                .toList();
-        return ResponseEntity.ok(assignments);
+    @GetMapping("/test-run/{id}")
+    public ResponseEntity<List<TestCaseTestRunDTO>> getByTestRunId(@PathVariable Long id) {
+        return ResponseEntity.ok(testCaseTestRunService.getByTestRunId(id));
     }
-    
+
     /**
-     * Gibt alle Zuordnungen für einen bestimmten Tester zurück.
-     * Ermöglicht Testern, ihre zugewiesenen Testfälle abzufragen.
-     * 
-     * @param testerId Die ID des Testers
-     * @return Liste der Zuordnungen
+     * Findet alle Ausführungen, die einem bestimmten Tester zugewiesen sind.
+     *
+     * @param id Die ID des Testers.
+     * @return Eine Liste von DTOs.
      */
-    @GetMapping("/tester/{testerId}")
-    public ResponseEntity<List<TestCaseTestRunDTO>> getByTesterId(@PathVariable Long testerId) {
-        List<TestCaseTestRunDTO> assignments = testCaseTestRunService.getByTesterId(testerId)
-                .stream()
-                .map(this::convertToDTO)
-                .toList();
-        return ResponseEntity.ok(assignments);
+    @GetMapping("/tester/{id}")
+    public ResponseEntity<List<TestCaseTestRunDTO>> getByTesterId(@PathVariable Long id) {
+        return ResponseEntity.ok(testCaseTestRunService.getByTesterId(id));
     }
-    
+
     /**
-     * Erstellt eine neue Zuordnung zwischen Testfall, Testlauf und Tester.
-     * Ermöglicht Testmanager:innen, Testfälle einem Testlauf zuzuweisen
-     * und einen Tester für die Durchführung zu bestimmen.
-     * Die Eingabedaten werden automatisch validiert.
-     * 
-     * @param dto Die Zuordnungsdaten (validiert)
-     * @return Die erstellte Zuordnung
+     * Erstellt eine neue Testfall-Ausführung (weist einen Testfall einem Testlauf zu).
+     *
+     * @param dto Die Daten der neuen Zuordnung.
+     * @return Das erstellte DTO.
      */
     @PostMapping
-    public ResponseEntity<TestCaseTestRunDTO> createTestCaseTestRun(@Valid @RequestBody TestCaseTestRunDTO dto) {
-        TestCaseTestRun assignment = convertToEntity(dto);
-        TestCaseTestRun createdAssignment = testCaseTestRunService.createTestCaseTestRun(assignment);
-        return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(createdAssignment));
+    public ResponseEntity<TestCaseTestRunDTO> create(@RequestBody TestCaseTestRunDTO dto) {
+        return ResponseEntity.ok(testCaseTestRunService.createFromDTO(dto));
     }
-    
+
     /**
-     * Aktualisiert eine bestehende Zuordnung.
-     * Ermöglicht das Ändern des zugewiesenen Testers.
-     * Die Eingabedaten werden automatisch validiert.
-     * 
-     * @param id Die Zuordnungs-ID
-     * @param dto Die neuen Zuordnungsdaten (validiert)
-     * @return Die aktualisierte Zuordnung
+     * Aktualisiert eine bestehende Testfall-Ausführung (z.B. Statusänderung).
+     *
+     * @param id Die ID der zu aktualisierenden Ausführung.
+     * @param dto Die neuen Daten.
+     * @return Das aktualisierte DTO.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<TestCaseTestRunDTO> updateTestCaseTestRun(@PathVariable Long id, 
-                                                                    @Valid @RequestBody TestCaseTestRunDTO dto) {
-        TestCaseTestRun assignment = convertToEntity(dto);
-        TestCaseTestRun updatedAssignment = testCaseTestRunService.updateTestCaseTestRun(id, assignment);
-        return ResponseEntity.ok(convertToDTO(updatedAssignment));
+    public ResponseEntity<TestCaseTestRunDTO> update(@PathVariable Long id, @RequestBody TestCaseTestRunDTO dto) {
+        return ResponseEntity.ok(testCaseTestRunService.updateTestCaseTestRun(id, dto));
     }
-    
+
     /**
-     * Löscht eine Zuordnung.
-     * 
-     * @param id Die Zuordnungs-ID
-     * @return Leere Antwort
+     * Löscht eine Testfall-Ausführung (entfernt den Testfall aus dem Lauf).
+     *
+     * @param id Die ID der zu löschenden Ausführung.
+     * @return Eine leere Antwort.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTestCaseTestRun(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         testCaseTestRunService.deleteTestCaseTestRun(id);
         return ResponseEntity.noContent().build();
-    }
-    
-    /**
-     * Konvertiert eine TestCaseTestRun-Entity in ein TestCaseTestRunDTO.
-     * 
-     * @param entity Die TestCaseTestRun-Entity
-     * @return Das TestCaseTestRunDTO
-     */
-    private TestCaseTestRunDTO convertToDTO(TestCaseTestRun entity) {
-        TestCaseTestRunDTO dto = new TestCaseTestRunDTO();
-        dto.setId(entity.getId());
-        dto.setTestCaseId(entity.getTestCaseId());
-        dto.setTestRunId(entity.getTestRunId());
-        dto.setTesterId(entity.getTesterId());
-        return dto;
-    }
-    
-    /**
-     * Konvertiert ein TestCaseTestRunDTO in eine TestCaseTestRun-Entity.
-     * 
-     * @param dto Das TestCaseTestRunDTO
-     * @return Die TestCaseTestRun-Entity
-     */
-    private TestCaseTestRun convertToEntity(TestCaseTestRunDTO dto) {
-        TestCaseTestRun entity = new TestCaseTestRun();
-        entity.setTestCaseId(dto.getTestCaseId());
-        entity.setTestRunId(dto.getTestRunId());
-        entity.setTesterId(dto.getTesterId());
-        return entity;
     }
 }

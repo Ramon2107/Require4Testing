@@ -12,26 +12,27 @@ import java.util.List;
  */
 @Repository
 public interface TestCaseRepository extends JpaRepository<TestCase, Long> {
-    
+
     /**
      * Findet alle Testfälle einer bestimmten Anforderung.
-     * 
+     * Nutzt den Underscore, um auf die ID innerhalb der Requirement-Relation zuzugreifen.
+     *
      * @param requirementId Die ID der Anforderung
      * @return Liste der Testfälle
      */
-    List<TestCase> findByRequirementId(Long requirementId);
-    
+    List<TestCase> findByRequirement_Id(Long requirementId);
+
     /**
      * Findet alle Testfälle eines bestimmten Erstellers.
-     * 
+     *
      * @param createdBy Die ID des Erstellers
      * @return Liste der Testfälle
      */
     List<TestCase> findByCreatedBy(Long createdBy);
-    
+
     /**
      * Findet Testfälle, deren Name einen bestimmten Suchbegriff enthält.
-     * 
+     *
      * @param name Der Suchbegriff
      * @return Liste der gefundenen Testfälle
      */
