@@ -6,7 +6,7 @@
   @module Templates
   @author Require4Testing Team
 -->
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
@@ -15,18 +15,15 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <div class="d-flex align-items-center">
-                    <!-- Fix: Sichere Anzeige der ID -->
                     <span class="badge bg-dark font-monospace me-2 fs-5" th:text="${requirement.readableId != null ? requirement.readableId : 'REQ-' + requirement.id}">REQ-1</span>
                     <h2 class="mb-0" th:text="${requirement.name}">Requirement Name</h2>
                 </div>
-                <!-- Status Anzeige -->
                 <div class="mt-2">
                     <span th:if="${requirement.status == 'SUCCESSFUL'}" class="badge bg-success">SUCCESSFUL</span>
                     <span th:if="${requirement.status == 'FAILED'}" class="badge bg-danger">FAILED</span>
                     <span th:if="${requirement.status == 'IN_PROGRESS'}" class="badge bg-warning text-dark">IN PROGRESS</span>
-                    <span th:if="${requirement.status == 'PLANNED'}" class="badge bg-secondary">PLANNED</span>
-                    <!-- Fallback -->
-                    <span th:if="${requirement.status != 'SUCCESSFUL' and requirement.status != 'FAILED' and requirement.status != 'IN_PROGRESS' and requirement.status != 'PLANNED'}"
+                    <span th:if="${requirement.status == 'PLANNING'}" class="badge bg-secondary">PLANNING</span>
+                    <span th:if="${requirement.status != 'SUCCESSFUL' and requirement.status != 'FAILED' and requirement.status != 'IN_PROGRESS' and requirement.status != 'PLANNING'}"
                           class="badge bg-light text-dark border" th:text="${requirement.status}">STATUS</span>
                 </div>
             </div>
@@ -51,7 +48,6 @@
                 <div class="card shadow-sm">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>Testfälle</span>
-                        <!-- Button triggert Modal für neuen Testfall -->
                         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTestCaseModal">
                             + Testfall
                         </button>
@@ -63,14 +59,23 @@
                         <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(requirement.testCases)}">
                             <li class="list-group-item" th:each="tc : ${requirement.testCases}">
                                 <div class="d-flex justify-content-between align-items-start">
-                                    <div>
+                                    <div class="me-3">
                                         <div class="fw-bold">
                                             <span class="badge bg-light text-dark border me-1" th:text="'TC-' + ${tc.id}">TC-1</span>
                                             <span th:text="${tc.name}">Testfall Name</span>
                                         </div>
                                         <small class="text-muted" th:text="${tc.description}">Beschreibung</small>
                                     </div>
-                                    <!-- Optional: Aktionen pro Testfall -->
+
+                                    <div class="d-flex gap-2">
+                                        <form th:action="@{/ui/requirements/{reqId}/testcases/{tcId}/delete(reqId=${requirement.id},tcId=${tc.id})}"
+                                              method="post"
+                                              onsubmit="return confirm('Soll der Testfall wirklich aus der Anforderung gelöscht werden?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Löschen
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </li>
                         </ul>
@@ -80,7 +85,6 @@
 
             <!-- Sidebar / Stats -->
             <div class="col-md-4">
-                <!-- Platzhalter für Statistiken oder Metadaten -->
                 <div class="card bg-light mb-3">
                     <div class="card-body">
                         <h6 class="card-title">Statistik</h6>
@@ -98,21 +102,21 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Neuer Testfall</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                     </div>
                     <div class="modal-body">
                         <form th:action="@{/ui/requirements/{id}/testcases(id=${requirement.id})}" th:object="${newTestCase}" method="post">
                             <div class="mb-3">
-                                <label class="form-label">Titel</label>
-                                <input type="text" class="form-control" th:field="*{name}" required>
+                                <label class="form-label" for="tcName">Titel</label>
+                                <input id="tcName" type="text" class="form-control" th:field="*{name}" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Beschreibung</label>
-                                <textarea class="form-control" th:field="*{description}" rows="2"></textarea>
+                                <label class="form-label" for="tcDescription">Beschreibung</label>
+                                <textarea id="tcDescription" class="form-control" th:field="*{description}" rows="2"></textarea>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Testschritte</label>
-                                <textarea class="form-control" th:field="*{testSteps}" rows="4" placeholder="1. Schritt..."></textarea>
+                                <label class="form-label" for="tcSteps">Testschritte</label>
+                                <textarea id="tcSteps" class="form-control" th:field="*{testSteps}" rows="4" placeholder="1. Schritt..."></textarea>
                             </div>
                             <button type="submit" class="btn btn-success w-100">Testfall anlegen</button>
                         </form>

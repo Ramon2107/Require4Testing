@@ -2,143 +2,122 @@ package com.iu.require4testing.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
- * Globaler Exception-Handler für die REST-API.
- * Behandelt alle Exceptions zentral und gibt einheitliche Fehlermeldungen zurück.
- * Implementiert Best Practices für API-Fehlerbehandlung.
+ * Globale Ausnahmebehandlung für die Anwendung.
+ *
+ * <p>
+ * Diese Klasse stellt sicher, dass Fehlerfälle konsistent behandelt werden.
+ * Besonders wichtig: Fehlende statische Ressourcen (z.B. CSS/JS/WebJars/Favicon)
+ * dürfen nicht als JSON mit Status 500 beantwortet werden, da Browser diese Antworten
+ * wegen des falschen MIME-Typs blockieren (z.B. "application/json" statt "text/css").
+ * </p>
+ *
+ * <p>
+ * Daher wird {@link NoResourceFoundException} explizit als HTTP 404 behandelt.
+ * </p>
+ *
+ * @author Require4Testing Team
+ * @version 1.1.0
  */
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     /**
-     * Behandelt Validierungsfehler aus @Valid-Annotationen.
-     * Gibt detaillierte Informationen zu allen Validierungsfehlern zurück.
-     * 
-     * @param ex Die MethodArgumentNotValidException
-     * @param request Die Web-Anfrage
-     * @return ResponseEntity mit Validierungsfehlerdetails
+     * Behandelt fehlende Ressourcen (statische Inhalte) korrekt als HTTP 404.
+     *
+     * <p>
+     * Typische Fälle:
+     * </p>
+     * <ul>
+     *   <li>/webjars/** (Bootstrap, Bootstrap Icons)</li>
+     *   <li>/favicon.ico</li>
+     *   <li>/css/**, /js/**, /images/** (falls vorhanden)</li>
+     * </ul>
+     *
+     * <p>
+     * Das verhindert, dass Browser Stylesheets oder Skripte blockieren, weil sie statt CSS/JS eine JSON-Fehlerseite erhalten.
+     * </p>
+     *
+     * @param ex Ausnahme, die ausgelöst wurde, weil eine Ressource nicht gefunden wurde.
+     * @return HTTP 404 mit Fehlerdetails im JSON-Format.
      */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Object> handleValidationExceptions(
-            MethodArgumentNotValidException ex, WebRequest request) {
-        
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResourceFound(NoResourceFoundException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Validierungsfehler");
-        
-        // Sammle alle Feldvalidierungsfehler
-        List<Map<String, String>> fieldErrors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(this::mapFieldError)
-                .collect(Collectors.toList());
-        
-        body.put("message", "Die Eingabedaten sind ungültig");
-        body.put("fieldErrors", fieldErrors);
-        body.put("path", request.getDescription(false));
-        
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        body.put("timestamp", OffsetDateTime.now().toString());
+        body.put("status", HttpStatus.NOT_FOUND.value());
+        body.put("error", HttpStatus.NOT_FOUND.getReasonPhrase());
+        body.put("message", ex.getMessage());
+        body.put("path", ex.getResourcePath());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
-    
+
     /**
-     * Wandelt einen FieldError in eine Map um.
-     * Sensible Felder wie Passwörter werden aus Sicherheitsgründen nicht angezeigt.
-     * 
-     * @param error Der FieldError
-     * @return Map mit Feldname und Fehlermeldung
-     */
-    private Map<String, String> mapFieldError(FieldError error) {
-        Map<String, String> errorMap = new LinkedHashMap<>();
-        errorMap.put("field", error.getField());
-        errorMap.put("message", error.getDefaultMessage());
-        
-        // Sensible Felder nicht in der Fehlerantwort anzeigen
-        String fieldName = error.getField().toLowerCase();
-        if (fieldName.contains("password") || fieldName.contains("passwort") 
-                || fieldName.contains("secret") || fieldName.contains("token")) {
-            errorMap.put("rejectedValue", "[VERSTECKT]");
-        } else {
-            errorMap.put("rejectedValue", error.getRejectedValue() != null 
-                    ? error.getRejectedValue().toString() : "null");
-        }
-        return errorMap;
-    }
-    
-    /**
-     * Behandelt ResourceNotFoundException.
-     * 
-     * @param ex Die Exception
-     * @param request Die Web-Anfrage
-     * @return ResponseEntity mit Fehlerdetails
+     * Behandelt "Resource not found" aus der Business-Logik.
+     *
+     * <p>
+     * Hinweis: Das ist nicht die gleiche Kategorie wie {@link NoResourceFoundException} (statische Ressourcen).
+     * Diese Exception steht typischerweise für "Datensatz nicht gefunden".
+     * </p>
+     *
+     * @param ex Ausnahme.
+     * @return HTTP 404 mit Fehlerdetails.
      */
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Object> handleResourceNotFoundException(
-            ResourceNotFoundException ex, WebRequest request) {
-        
+    public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
+        body.put("timestamp", OffsetDateTime.now().toString());
         body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("error", "Nicht gefunden");
+        body.put("error", HttpStatus.NOT_FOUND.getReasonPhrase());
         body.put("message", ex.getMessage());
-        body.put("path", request.getDescription(false));
-        
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
-    
+
     /**
-     * Behandelt IllegalArgumentException.
-     * 
-     * @param ex Die Exception
-     * @param request Die Web-Anfrage
-     * @return ResponseEntity mit Fehlerdetails
+     * Behandelt typische Laufzeitfehler, die bewusst als "Bad Request" bewertet werden sollen.
+     *
+     * <p>
+     * Dazu zählen beispielsweise ungültige Statuswerte oder Validierungsfälle, die nicht über Bean Validation laufen.
+     * </p>
+     *
+     * @param ex Ausnahme.
+     * @return HTTP 400 mit Fehlerdetails.
      */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Object> handleIllegalArgumentException(
-            IllegalArgumentException ex, WebRequest request) {
-        
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
+        body.put("timestamp", OffsetDateTime.now().toString());
         body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Ungültige Anfrage");
+        body.put("error", HttpStatus.BAD_REQUEST.getReasonPhrase());
         body.put("message", ex.getMessage());
-        body.put("path", request.getDescription(false));
-        
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
-    
+
     /**
-     * Behandelt alle anderen Exceptions.
-     * Gibt aus Sicherheitsgründen keine internen Details preis.
-     * 
-     * @param ex Die Exception
-     * @param request Die Web-Anfrage
-     * @return ResponseEntity mit Fehlerdetails
+     * Fallback für alle nicht gesondert behandelten Fehler.
+     *
+     * <p>
+     * Wichtig: {@link NoResourceFoundException} wird oben separat behandelt und fällt daher nicht in diesen Handler.
+     * </p>
+     *
+     * @param ex Ausnahme.
+     * @return HTTP 500 mit Fehlerdetails.
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleAllExceptions(
-            Exception ex, WebRequest request) {
-        
+    public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
+        body.put("timestamp", OffsetDateTime.now().toString());
         body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        body.put("error", "Interner Serverfehler");
-        // Aus Sicherheitsgründen keine internen Details in der API-Antwort
-        body.put("message", "Ein unerwarteter Fehler ist aufgetreten. Bitte kontaktieren Sie den Support.");
-        body.put("path", request.getDescription(false));
-        
-        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+        body.put("error", HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

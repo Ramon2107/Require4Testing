@@ -3,7 +3,6 @@ package com.iu.require4testing.controller;
 import com.iu.require4testing.dto.TestRunDTO;
 import com.iu.require4testing.service.TestRunService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,11 +30,12 @@ public class TestRunController {
     private final TestRunService testRunService;
 
     /**
-     * Konstruktor für die Dependency Injection des Services.
+     * Erstellt den Controller und injiziert den {@link TestRunService}.
+     *
+     * <p>Hinweis: Bei genau einem Konstruktor ist in Spring keine zusätzliche Annotation nötig.</p>
      *
      * @param testRunService Die zu injizierende Service-Instanz.
      */
-    @Autowired
     public TestRunController(TestRunService testRunService) {
         this.testRunService = testRunService;
     }

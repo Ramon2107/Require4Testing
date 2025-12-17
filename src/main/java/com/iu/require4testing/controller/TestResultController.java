@@ -3,7 +3,6 @@ package com.iu.require4testing.controller;
 import com.iu.require4testing.dto.TestResultDTO;
 import com.iu.require4testing.service.TestResultService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,11 +29,12 @@ public class TestResultController {
     private final TestResultService testResultService;
 
     /**
-     * Konstruktor für Dependency Injection.
+     * Erstellt den Controller und injiziert den {@link TestResultService}.
+     *
+     * <p>Hinweis: Bei genau einem Konstruktor ist in Spring keine zusätzliche Annotation nötig.</p>
      *
      * @param testResultService Der Service für Testergebnisse.
      */
-    @Autowired
     public TestResultController(TestResultService testResultService) {
         this.testResultService = testResultService;
     }

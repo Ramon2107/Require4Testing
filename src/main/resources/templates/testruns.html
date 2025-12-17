@@ -5,7 +5,7 @@
   @module Templates
   @author Require4Testing Team
 -->
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
@@ -17,18 +17,18 @@
                     <div class="card-body">
                         <form th:action="@{/ui/testruns}" th:object="${newTestRun}" method="post">
                             <div class="mb-3">
-                                <label>Name des Laufs</label>
-                                <input type="text" class="form-control" th:field="*{name}" required placeholder="Sprint X Test">
+                                <label for="testrunName" class="form-label">Name des Laufs</label>
+                                <input id="testrunName" type="text" class="form-control" th:field="*{name}" required placeholder="Release 1 – Checkout Smoke">
                             </div>
 
                             <div class="mb-3">
-                                <label>Zu testende Anforderung</label>
-                                <select name="requirementId" class="form-select" required>
+                                <label for="testrunRequirement" class="form-label">Zu testende Anforderung</label>
+                                <select id="testrunRequirement" name="requirementId" class="form-select" required>
                                     <option value="" selected disabled>Anforderung wählen...</option>
                                     <option th:each="req : ${requirements}"
                                             th:value="${req.id}"
                                             th:text="'[' + ${req.readableId} + '] ' + ${req.name}">
-                                        [REQ-2025-001] Login
+                                        [REQ-2025-0001] Login
                                     </option>
                                 </select>
                                 <div class="form-text small">Ein Testlauf prüft genau eine Anforderung.</div>
@@ -60,7 +60,6 @@
                                 <td><span class="badge bg-light text-dark border" th:text="${tr.readableId != null ? tr.readableId : 'TR-' + tr.id}">TR-2025-0000</span></td>
                                 <td th:text="${tr.name}">Sprint 1</td>
                                 <td>
-                                    <!-- Fix: Richtige Anzeige der Requirement ID -->
                                     <span th:if="${tr.requirement != null}" class="badge bg-secondary"
                                           th:text="${tr.requirement.readableId != null ? tr.requirement.readableId : 'REQ-' + tr.requirement.id}">REQ-1</span>
                                 </td>

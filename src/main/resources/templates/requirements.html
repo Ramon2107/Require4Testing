@@ -2,12 +2,11 @@
 <!--
   Übersichtsseite für Anforderungen.
   Zeigt dynamische Status basierend auf Testläufen.
-  Nur PLANNED, IN_PROGRESS, SUCCESSFUL, FAILED.
 
   @module Templates
   @author Require4Testing Team
 -->
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
@@ -34,14 +33,15 @@
                         <td><span class="badge bg-light text-dark border" th:text="${req.readableId != null ? req.readableId : req.id}">REQ-001</span></td>
                         <td th:text="${req.name}">Login</td>
                         <td>
-                            <!-- Dynamische Status Anzeige -->
                             <span th:if="${req.status == 'SUCCESSFUL'}" class="badge bg-success">SUCCESSFUL</span>
                             <span th:if="${req.status == 'FAILED'}" class="badge bg-danger">FAILED</span>
                             <span th:if="${req.status == 'IN_PROGRESS'}" class="badge bg-warning text-dark">IN PROGRESS</span>
-                            <span th:if="${req.status == 'PLANNED'}" class="badge bg-secondary">PLANNED</span>
+                            <span th:if="${req.status == 'PLANNING'}" class="badge bg-secondary">PLANNING</span>
 
-                            <!-- Fallback falls alter Status noch in DB -->
-                            <span th:if="${req.status != 'SUCCESSFUL' and req.status != 'FAILED' and req.status != 'IN_PROGRESS' and req.status != 'PLANNED'}"
+                            <!-- Fallback (alte Daten) -->
+                            <span th:if="${req.status == 'PLANNED'}" class="badge bg-secondary">PLANNING</span>
+
+                            <span th:if="${req.status != 'SUCCESSFUL' and req.status != 'FAILED' and req.status != 'IN_PROGRESS' and req.status != 'PLANNING' and req.status != 'PLANNED'}"
                                   class="badge bg-light text-dark border" th:text="${req.status}">STATUS</span>
                         </td>
                         <td th:text="${#temporals.format(req.createdAt, 'dd.MM.yyyy')}">01.01.2025</td>
@@ -60,19 +60,18 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Neue Anforderung</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                     </div>
                     <div class="modal-body">
                         <form th:action="@{/ui/requirements}" th:object="${newRequirement}" method="post">
                             <div class="mb-3">
-                                <label class="form-label">Titel</label>
-                                <input type="text" class="form-control" th:field="*{name}" required>
+                                <label class="form-label" for="reqName">Titel</label>
+                                <input id="reqName" type="text" class="form-control" th:field="*{name}" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Beschreibung</label>
-                                <textarea class="form-control" th:field="*{description}" rows="3"></textarea>
+                                <label class="form-label" for="reqDescription">Beschreibung</label>
+                                <textarea id="reqDescription" class="form-control" th:field="*{description}" rows="3"></textarea>
                             </div>
-                            <!-- Status ist initial immer PLANNED, wird im Service gesetzt -->
                             <button type="submit" class="btn btn-primary w-100">Speichern</button>
                         </form>
                     </div>

@@ -3,7 +3,6 @@ package com.iu.require4testing.service;
 import com.iu.require4testing.dto.UserDTO;
 import com.iu.require4testing.entity.User;
 import com.iu.require4testing.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,19 +19,33 @@ import java.util.stream.Collectors;
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository repo;
+    private final UserRepository repo;
+
+    /**
+     * Erstellt den Service und injiziert das {@link UserRepository}.
+     *
+     * <p>Hinweis: Bei genau einem Konstruktor ist in Spring keine zusätzliche Annotation nötig.</p>
+     *
+     * @param repo Repository für Benutzer.
+     */
+    public UserService(UserRepository repo) {
+        this.repo = repo;
+    }
 
     // --- UI Methoden (arbeiten direkt mit Entities) ---
 
     /**
      * Lädt alle Benutzer als Entities.
+     *
      * @return Liste aller User
      */
-    public List<User> findAll() { return repo.findAll(); }
+    public List<User> findAll() {
+        return repo.findAll();
+    }
 
     /**
      * Findet einen Benutzer anhand der ID.
+     *
      * @param id User ID
      * @return User Entity
      * @throws RuntimeException wenn nicht gefunden
@@ -45,6 +58,7 @@ public class UserService {
 
     /**
      * Gibt alle Benutzer als DTOs zurück.
+     *
      * @return Liste von UserDTOs
      */
     public List<UserDTO> getAllUsers() {
@@ -53,6 +67,7 @@ public class UserService {
 
     /**
      * Holt einen Benutzer als DTO anhand der ID.
+     *
      * @param id User ID
      * @return UserDTO
      */
@@ -62,6 +77,7 @@ public class UserService {
 
     /**
      * Sucht einen Benutzer anhand des Benutzernamens.
+     *
      * @param username Der Benutzername
      * @return UserDTO oder null
      */
@@ -75,6 +91,7 @@ public class UserService {
 
     /**
      * Erstellt einen neuen Benutzer aus einem DTO.
+     *
      * @param dto Eingabe-DTO
      * @return Erstelltes UserDTO
      */
@@ -88,6 +105,7 @@ public class UserService {
 
     /**
      * Aktualisiert einen Benutzer.
+     *
      * @param id ID des Benutzers
      * @param dto Update-Daten
      * @return Aktualisiertes UserDTO
@@ -101,6 +119,7 @@ public class UserService {
 
     /**
      * Löscht einen Benutzer.
+     *
      * @param id ID des zu löschenden Benutzers
      */
     public void deleteUser(Long id) {
@@ -109,6 +128,7 @@ public class UserService {
 
     /**
      * Hilfsmethode: Konvertiert Entity zu DTO.
+     *
      * @param user User Entity
      * @return UserDTO
      */

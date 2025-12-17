@@ -6,7 +6,7 @@
   @module Templates
   @author Require4Testing Team
 -->
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
@@ -15,17 +15,19 @@
         <div class="p-5 mb-4 bg-white rounded-3 shadow-sm border">
             <div class="container-fluid py-2">
                 <h1 class="display-5 fw-bold">
-                    Willkommen bei Require4Testing, <span class="text-primary" th:text="${user.username}">User</span>!
+                    Willkommen zu Require4Testing,
+                    <span class="text-primary" th:text="${user.username}">Name</span>!
                 </h1>
+
                 <p class="col-md-8 fs-4 mt-3">
-                    Sie sind im System angemeldet als:
-                    <!-- Deutsche Rollenbezeichnungen -->
-                    <span class="badge bg-danger" th:if="${user.role == 'ADMIN'}">Administrator</span>
+                    Rolle im System:
+                    <span class="badge bg-danger" th:if="${user.role == 'ADMIN'}">Admin</span>
                     <span class="badge bg-success" th:if="${user.role == 'MANAGER'}">Testmanager</span>
                     <span class="badge bg-info text-dark" th:if="${user.role == 'CREATOR'}">Testfallersteller</span>
                     <span class="badge bg-warning text-dark" th:if="${user.role == 'TESTER'}">Tester</span>
                     <span class="badge bg-secondary" th:if="${user.role == 'REQUIREMENT_ENGINEER'}">Requirements Engineer</span>
                 </p>
+
                 <p class="text-muted">
                     Hier finden Sie Ihre Aufgaben und Verwaltungsfunktionen.
                 </p>
@@ -60,7 +62,7 @@
                                 <tr th:each="task : ${myTasks}">
                                     <td th:text="${task.testRun.name}">Sprint 1</td>
                                     <td th:text="${task.testCase.name}">Login Test</td>
-                                    <td><span class="badge bg-warning text-dark">OFFEN</span></td>
+                                    <td><span class="badge bg-info text-dark">ZUGEWIESEN</span></td>
                                     <td>
                                         <a th:href="@{/ui/testruns/{id}(id=${task.testRun.id})}" class="btn btn-sm btn-primary">Ausführen</a>
                                     </td>

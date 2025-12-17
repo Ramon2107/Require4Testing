@@ -3,7 +3,6 @@ package com.iu.require4testing.controller;
 import com.iu.require4testing.dto.TestCaseDTO;
 import com.iu.require4testing.service.TestCaseService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +24,12 @@ public class TestCaseController {
     private final TestCaseService testCaseService;
 
     /**
-     * Konstruktor mit Dependency Injection.
+     * Erstellt den Controller und injiziert den {@link TestCaseService}.
      *
-     * @param testCaseService Der Testfall-Service
+     * <p>Hinweis: Bei genau einem Konstruktor ist in Spring keine zusätzliche Annotation nötig.</p>
+     *
+     * @param testCaseService Der Testfall-Service.
      */
-    @Autowired
     public TestCaseController(TestCaseService testCaseService) {
         this.testCaseService = testCaseService;
     }

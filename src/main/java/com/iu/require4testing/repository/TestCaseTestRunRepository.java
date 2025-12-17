@@ -13,46 +13,43 @@ import java.util.Optional;
  */
 @Repository
 public interface TestCaseTestRunRepository extends JpaRepository<TestCaseTestRun, Long> {
-    
-    /**
-     * Findet alle Zuordnungen für einen bestimmten Testfall.
-     * 
-     * @param testCaseId Die ID des Testfalls
-     * @return Liste der Zuordnungen
-     */
+
     List<TestCaseTestRun> findByTestCaseId(Long testCaseId);
-    
-    /**
-     * Findet alle Zuordnungen für einen bestimmten Testlauf.
-     * 
-     * @param testRunId Die ID des Testlaufs
-     * @return Liste der Zuordnungen
-     */
+
     List<TestCaseTestRun> findByTestRunId(Long testRunId);
-    
-    /**
-     * Findet alle Zuordnungen für einen bestimmten Tester.
-     * 
-     * @param testerId Die ID des Testers
-     * @return Liste der Zuordnungen
-     */
+
     List<TestCaseTestRun> findByTesterId(Long testerId);
-    
+
+    List<TestCaseTestRun> findByTesterIdAndStatus(Long testerId, String status);
+
     /**
-     * Findet eine spezifische Zuordnung.
-     * 
-     * @param testCaseId Die ID des Testfalls
-     * @param testRunId Die ID des Testlaufs
-     * @return Optional mit der Zuordnung, falls gefunden
+     * Prüft effizient, ob es innerhalb einer Anforderung mindestens einen fehlgeschlagenen Test gibt.
+     *
+     * @param requirementId Die ID der Anforderung
+     * @param status Der zu prüfende Status (typischerweise {@code FAILED})
+     * @return {@code true}, wenn ein Eintrag existiert, sonst {@code false}
      */
+    boolean existsByTestRun_Requirement_IdAndStatus(Long requirementId, String status);
+
+    /**
+     * Prüft effizient, ob es innerhalb einer Anforderung mindestens eine Zuordnung gibt, die einem Tester zugewiesen ist.
+     *
+     * @param requirementId Die ID der Anforderung
+     * @return {@code true}, wenn eine Zuordnung mit Tester existiert, sonst {@code false}
+     */
+    boolean existsByTestRun_Requirement_IdAndTesterIsNotNull(Long requirementId);
+
+    /**
+     * Prüft effizient, ob innerhalb einer Anforderung mindestens eine zugewiesene Ausführung existiert,
+     * die noch nicht {@code PASSED} ist (z.B. {@code ASSIGNED}).
+     *
+     * @param requirementId Die ID der Anforderung
+     * @param status Der Status, der ausgeschlossen werden soll (typischerweise {@code PASSED})
+     * @return {@code true}, wenn eine solche Ausführung existiert, sonst {@code false}
+     */
+    boolean existsByTestRun_Requirement_IdAndTesterIsNotNullAndStatusNot(Long requirementId, String status);
+
     Optional<TestCaseTestRun> findByTestCaseIdAndTestRunId(Long testCaseId, Long testRunId);
-    
-    /**
-     * Prüft, ob eine Zuordnung existiert.
-     * 
-     * @param testCaseId Die ID des Testfalls
-     * @param testRunId Die ID des Testlaufs
-     * @return true, wenn die Zuordnung existiert
-     */
+
     boolean existsByTestCaseIdAndTestRunId(Long testCaseId, Long testRunId);
 }
