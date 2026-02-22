@@ -20,8 +20,11 @@ public class Requirement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Sprechende ID, z.B. REQ-2025-0001. Muss eindeutig sein. */
-    @Column(unique = true)
+    /**
+     * Sprechende ID, z.B. REQ-2025-0001. Muss eindeutig sein.
+     * Explizite Spaltenbenennung, um Inkonsistenzen mit Naming-Strategien auszuschließen.
+     */
+    @Column(name = "readable_id", unique = true)
     private String readableId;
 
     @Column(nullable = false, length = 500)

@@ -9,6 +9,7 @@ import com.iu.require4testing.repository.TestRunRepository;
 import com.iu.require4testing.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -17,15 +18,17 @@ import java.util.stream.Collectors;
  * Service-Klasse für die Verwaltung von Testfall-Ausführungen.
  *
  * <p>
- * Fachliche Leitplanken in dieser Version:
+ * Das Testergebnis wird direkt in der Ausführung gespeichert {@link TestCaseTestRun}
+ * Dadurch sind Ergebnis (PASSED/FAILED) und optionale Notizen
+ * eindeutig an die konkrete Kombination aus Testfall und Testlauf gebunden.
  * </p>
- * <ul>
- *   <li>Für Testfall-Ausführungen werden die Stati {@code ASSIGNED}, {@code PASSED} und {@code FAILED} verwendet.</li>
- *   <li>Es gibt UI-nahe Operationen zum Löschen von Zuordnungen und zum Umhängen (Reassign) auf einen anderen Tester.</li>
- * </ul>
+ *
+ * <p>
+ * Für Testfall-Ausführungen werden die Stati {@code ASSIGNED}, {@code PASSED} und {@code FAILED} verwendet.
+ * </p>
  *
  * @author Require4Testing Team
- * @version 2.1.0
+ * @version 2.4.0
  */
 @Service
 public class TestCaseTestRunService {
@@ -45,15 +48,17 @@ public class TestCaseTestRunService {
      */
     public static final String STATUS_FAILED = "FAILED";
 
+    /** Repository für die Zuordnungs-Entität. */
     private final TestCaseTestRunRepository repo;
+    /** Repository für Testfälle. */
     private final TestCaseRepository testCaseRepo;
+    /** Repository für Testläufe. */
     private final TestRunRepository testRunRepo;
+    /** Repository für Benutzer. */
     private final UserRepository userRepo;
 
     /**
-     * Erstellt den Service und injiziert alle benötigten Repositories.
-     *
-     * <p>Hinweis: Bei genau einem Konstruktor ist in Spring keine zusätzliche Annotation nötig.</p>
+     * Erstellt den Service und injiziert alle benötigten Repositories via Constructor Injection.
      *
      * @param repo Repository für Zuordnungen (Testfall ↔ Testlauf)
      * @param testCaseRepo Repository für Testfälle
@@ -84,28 +89,57 @@ public class TestCaseTestRunService {
     }
 
     /**
-     * Speichert eine Zuordnung.
+     * Speichert eine Zuordnung und setzt automatisch Metadaten.
      *
      * <p>
-     * Diese Methode normalisiert den Statuswert, bevor gespeichert wird.
+     * Diese Methode normalisiert den Statuswert. Wenn der Status
+     * auf {@code PASSED} oder {@code FAILED} gesetzt wird und noch kein Ausführungszeitpunkt
+     * vorhanden ist, wird dieser auf {@link LocalDateTime#now()} gesetzt.
      * </p>
      *
-     * @param assignment Entity
-     * @return Entity
+     * @param assignment Die zu speichernde Zuordnungs-Entity.
+     * @return Die gespeicherte Entity.
+     * @throws IllegalArgumentException falls das Assignment null ist.
      */
     public TestCaseTestRun save(TestCaseTestRun assignment) {
-        if (assignment != null && assignment.getStatus() != null) {
-            assignment.setStatus(normalizeAndValidateStatus(assignment.getStatus()));
+        if (assignment == null) {
+            throw new IllegalArgumentException("assignment darf nicht null sein");
         }
+
+        if (assignment.getStatus() != null) {
+            assignment.setStatus(normalizeAndValidateStatus(assignment.getStatus()));
+        } else if (assignment.getTester() != null) {
+            assignment.setStatus(STATUS_ASSIGNED);
+        }
+
+        // Setze Ausführungszeitpunkt, wenn Ergebnis vorliegt und noch kein Zeitstempel existiert
+        if ((STATUS_PASSED.equals(assignment.getStatus()) || STATUS_FAILED.equals(assignment.getStatus()))
+                && assignment.getExecutedAt() == null) {
+            assignment.setExecutedAt(LocalDateTime.now());
+        }
+
         return repo.save(assignment);
+    }
+
+    /**
+     * Prüft fachlich, ob ein Testfall bereits einem Testlauf zugeordnet wurde.
+     * Dient der Vermeidung von Dubletten innerhalb eines Laufs.
+     *
+     * @param runId ID des Testlaufs
+     * @param testCaseId ID des Testfalls
+     * @return true, falls die Zuordnung bereits existiert.
+     */
+    public boolean existsAssignment(Long runId, Long testCaseId) {
+        return repo.findAll().stream()
+                .anyMatch(a -> a.getTestRun().getId().equals(runId) && a.getTestCase().getId().equals(testCaseId));
     }
 
     /**
      * Lädt alle offenen Aufgaben eines Testers als Entities.
      * Wird vom Dashboard verwendet.
      *
-     * @param testerId User ID
-     * @return Liste von offenen Zuordnungen (Entities)
+     * @param testerId Die ID des Testers.
+     * @return Liste von offenen Zuordnungen (Status ASSIGNED).
      */
     public List<TestCaseTestRun> findAssignmentsByTester(Long testerId) {
         return repo.findByTesterIdAndStatus(testerId, STATUS_ASSIGNED);
@@ -123,15 +157,7 @@ public class TestCaseTestRunService {
     }
 
     /**
-     * Weist eine bestehende Zuordnung einem anderen Tester zu (Reassign).
-     *
-     * <p>
-     * Fachliche Logik:
-     * </p>
-     * <ul>
-     *   <li>Der Tester wird auf den neuen Benutzer gesetzt.</li>
-     *   <li>Der Status wird auf {@code ASSIGNED} gesetzt, damit die Aufgabe beim neuen Tester wieder als offen erscheint.</li>
-     * </ul>
+     * Weist eine bestehende Zuordnung einem anderen Tester zu.
      *
      * @param assignmentId ID der Zuordnung
      * @param newTesterId ID des neuen Testers
@@ -153,17 +179,17 @@ public class TestCaseTestRunService {
     /**
      * Lädt alle Zuordnungen als DTOs.
      *
-     * @return Liste DTOs
+     * @return Liste von DTOs.
      */
     public List<TestCaseTestRunDTO> getAllTestCaseTestRuns() {
         return repo.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     /**
-     * Lädt Zuordnung per ID als DTO.
+     * Lädt eine Zuordnung per ID als DTO.
      *
-     * @param id ID
-     * @return DTO
+     * @param id Die ID der Zuordnung.
+     * @return Das entsprechende DTO.
      */
     public TestCaseTestRunDTO getTestCaseTestRunById(Long id) {
         return toDTO(findById(id));
@@ -172,8 +198,8 @@ public class TestCaseTestRunService {
     /**
      * Lädt Zuordnungen per Testfall als DTOs.
      *
-     * @param testCaseId TC ID
-     * @return Liste DTOs
+     * @param testCaseId ID des Testfalls.
+     * @return Liste von DTOs.
      */
     public List<TestCaseTestRunDTO> getByTestCaseId(Long testCaseId) {
         return repo.findAll().stream()
@@ -183,10 +209,10 @@ public class TestCaseTestRunService {
     }
 
     /**
-     * Lädt Zuordnungen per Lauf als DTOs.
+     * Lädt Zuordnungen per Testlauf als DTOs.
      *
-     * @param testRunId Run ID
-     * @return Liste DTOs
+     * @param testRunId ID des Testlaufs.
+     * @return Liste von DTOs.
      */
     public List<TestCaseTestRunDTO> getByTestRunId(Long testRunId) {
         return repo.findAll().stream()
@@ -198,8 +224,8 @@ public class TestCaseTestRunService {
     /**
      * Lädt Zuordnungen per Tester als DTOs.
      *
-     * @param testerId User ID
-     * @return Liste DTOs
+     * @param testerId ID des Benutzers.
+     * @return Liste von DTOs.
      */
     public List<TestCaseTestRunDTO> getByTesterId(Long testerId) {
         return repo.findAll().stream()
@@ -209,14 +235,10 @@ public class TestCaseTestRunService {
     }
 
     /**
-     * Erstellt Zuordnung aus DTO.
+     * Erstellt eine Zuordnung basierend auf einem DTO.
      *
-     * <p>
-     * Wenn ein Tester gesetzt ist und kein Status übergeben wurde, wird der Status automatisch auf {@code ASSIGNED} gesetzt.
-     * </p>
-     *
-     * @param dto DTO
-     * @return DTO
+     * @param dto Das Datenübertragungsobjekt.
+     * @return Das gespeicherte DTO.
      */
     public TestCaseTestRunDTO createFromDTO(TestCaseTestRunDTO dto) {
         TestCaseTestRun entity = new TestCaseTestRun();
@@ -229,24 +251,27 @@ public class TestCaseTestRunService {
 
         if (dto.getStatus() != null) {
             entity.setStatus(normalizeAndValidateStatus(dto.getStatus()));
-        } else if (entity.getTester() != null) {
+        } else {
             entity.setStatus(STATUS_ASSIGNED);
+        }
+
+        entity.setNotes(dto.getNotes());
+        entity.setExecutedAt(dto.getExecutedAt());
+
+        if ((STATUS_PASSED.equals(entity.getStatus()) || STATUS_FAILED.equals(entity.getStatus()))
+                && entity.getExecutedAt() == null) {
+            entity.setExecutedAt(LocalDateTime.now());
         }
 
         return toDTO(repo.save(entity));
     }
 
     /**
-     * Aktualisiert Zuordnung aus DTO.
+     * Aktualisiert eine Zuordnung basierend auf einem DTO.
      *
-     * <p>
-     * Erlaubte Stati sind ausschließlich {@code ASSIGNED}, {@code PASSED} und {@code FAILED}.
-     * Zusätzlich kann der Tester geändert werden (Reassign via REST).
-     * </p>
-     *
-     * @param id ID
-     * @param dto DTO
-     * @return DTO
+     * @param id Die ID der Zuordnung.
+     * @param dto Das DTO mit den neuen Daten.
+     * @return Das aktualisierte DTO.
      */
     public TestCaseTestRunDTO updateTestCaseTestRun(Long id, TestCaseTestRunDTO dto) {
         TestCaseTestRun entity = findById(id);
@@ -257,18 +282,28 @@ public class TestCaseTestRunService {
 
         if (dto.getTesterId() != null) {
             entity.setTester(userRepo.findById(dto.getTesterId()).orElseThrow());
-            if (entity.getStatus() == null) {
-                entity.setStatus(STATUS_ASSIGNED);
-            }
+        }
+
+        if (dto.getNotes() != null) {
+            entity.setNotes(dto.getNotes());
+        }
+
+        if (dto.getExecutedAt() != null) {
+            entity.setExecutedAt(dto.getExecutedAt());
+        }
+
+        if ((STATUS_PASSED.equals(entity.getStatus()) || STATUS_FAILED.equals(entity.getStatus()))
+                && entity.getExecutedAt() == null) {
+            entity.setExecutedAt(LocalDateTime.now());
         }
 
         return toDTO(repo.save(entity));
     }
 
     /**
-     * Löscht Zuordnung.
+     * Löscht eine Zuordnung per ID.
      *
-     * @param id ID
+     * @param id Die ID der zu löschenden Zuordnung.
      */
     public void deleteTestCaseTestRun(Long id) {
         repo.deleteById(id);
@@ -277,13 +312,9 @@ public class TestCaseTestRunService {
     /**
      * Normalisiert und validiert einen Statuswert.
      *
-     * <p>
-     * Akzeptiert Eingaben in beliebiger Groß-/Kleinschreibung und führt sie auf die erlaubten Konstanten zurück.
-     * </p>
-     *
-     * @param status Eingabestatus
-     * @return normalisierter Status
-     * @throws IllegalArgumentException wenn der Status nicht erlaubt ist
+     * @param status Eingabestatus.
+     * @return Normalisierter Status (Großbuchstaben).
+     * @throws IllegalArgumentException falls der Status ungültig ist.
      */
     private String normalizeAndValidateStatus(String status) {
         String normalized = status.trim().toUpperCase(Locale.ROOT);
@@ -295,13 +326,23 @@ public class TestCaseTestRunService {
         throw new IllegalArgumentException("Ungültiger Status '" + status + "'. Erlaubt sind: ASSIGNED, PASSED, FAILED.");
     }
 
+    /**
+     * Transformiert eine Entity in ein DTO.
+     *
+     * @param entity Die Entity.
+     * @return Das DTO.
+     */
     private TestCaseTestRunDTO toDTO(TestCaseTestRun entity) {
         TestCaseTestRunDTO dto = new TestCaseTestRunDTO();
         dto.setId(entity.getId());
         dto.setTestCaseId(entity.getTestCase().getId());
         dto.setTestRunId(entity.getTestRun().getId());
-        if (entity.getTester() != null) dto.setTesterId(entity.getTester().getId());
+        if (entity.getTester() != null) {
+            dto.setTesterId(entity.getTester().getId());
+        }
         dto.setStatus(entity.getStatus());
+        dto.setNotes(entity.getNotes());
+        dto.setExecutedAt(entity.getExecutedAt());
         return dto;
     }
 }

@@ -8,6 +8,7 @@ import com.iu.require4testing.repository.TestCaseRepository;
 import com.iu.require4testing.repository.TestCaseTestRunRepository;
 import com.iu.require4testing.repository.TestRunRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Year;
 import java.util.List;
@@ -40,7 +41,7 @@ import java.util.stream.Collectors;
  * </p>
  *
  * @author Require4Testing Team
- * @version 3.6.1
+ * @version 3.7.0
  */
 @Service
 public class RequirementService {
@@ -70,23 +71,46 @@ public class RequirementService {
 
     // --- Methoden für UI Controller (Entities) ---
 
+    /**
+     * Holt alle Anforderungen aus der Datenbank.
+     * Vor der Rückgabe wird für jede Anforderung der Status basierend auf den fachlichen Regeln neu berechnet.
+     *
+     * @return Liste aller Anforderungen.
+     */
+    @Transactional(readOnly = true)
     public List<Requirement> findAll() {
         List<Requirement> reqs = repo.findAll();
         reqs.forEach(this::updateStatusBasedOnRules);
         return reqs;
     }
 
+    /**
+     * Findet eine Anforderung per ID.
+     * Berechnet den Status vor der Rückgabe neu.
+     *
+     * @param id Die technische ID der Anforderung.
+     * @return Die gefundene Anforderung.
+     * @throws RuntimeException falls die ID nicht existiert.
+     */
+    @Transactional(readOnly = true)
     public Requirement findById(Long id) {
         Requirement req = repo.findById(id).orElseThrow(() -> new RuntimeException("Requirement not found"));
         updateStatusBasedOnRules(req);
         return req;
     }
 
+    /**
+     * Speichert eine Anforderung.
+     * Falls es sich um eine Neuanlage handelt, wird eine sprechende ID generiert (z.B. REQ-2025-006).
+     *
+     * @param requirement Die zu speichernde Entity.
+     * @return Die persistierte Entity.
+     */
     public Requirement save(Requirement requirement) {
         if (requirement.getId() == null && requirement.getReadableId() == null) {
             int year = Year.now().getValue();
             long count = repo.count() + 1;
-            String readableId = String.format("REQ-%d-%04d", year, count);
+            String readableId = String.format("REQ-%d-%03d", year, count);
             requirement.setReadableId(readableId);
         }
 
@@ -97,10 +121,19 @@ public class RequirementService {
         return repo.save(requirement);
     }
 
+    /**
+     * Löscht eine Anforderung per ID.
+     * @param id ID.
+     */
     public void delete(Long id) {
         repo.deleteById(id);
     }
 
+    /**
+     * Erzwingt die Aktualisierung des Status einer Anforderung in der Datenbank.
+     *
+     * @param requirementId ID der Anforderung.
+     */
     public void refreshRequirementStatus(Long requirementId) {
         Requirement req = repo.findById(requirementId).orElse(null);
         if (req != null) {
@@ -111,6 +144,11 @@ public class RequirementService {
 
     // --- Interne Logik ---
 
+    /**
+     * Kern-Logik zur Berechnung des Requirement-Status.
+     *
+     * @param req Die zu aktualisierende Anforderung.
+     */
     private void updateStatusBasedOnRules(Requirement req) {
         boolean hasAnyTestCase = !testCaseRepo.findByRequirement_Id(req.getId()).isEmpty();
         if (!hasAnyTestCase) {
@@ -147,16 +185,19 @@ public class RequirementService {
 
     // --- Methoden für REST Controller (DTOs) ---
 
+    @Transactional(readOnly = true)
     public List<RequirementDTO> getAllRequirements() {
         return findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public RequirementDTO getRequirementById(Long id) {
         return convertToDTO(findById(id));
     }
 
+    @Transactional(readOnly = true)
     public List<RequirementDTO> getRequirementsByCreator(Long createdBy) {
         return repo.findAll().stream()
                 .filter(req -> req.getCreatedBy().equals(createdBy))
@@ -165,6 +206,7 @@ public class RequirementService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<RequirementDTO> searchRequirementsByName(String name) {
         return repo.findAll().stream()
                 .filter(req -> req.getName().toLowerCase().contains(name.toLowerCase()))

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Dashboard (Startseite).
-  Zeigt benutzerspezifische Inhalte und Rolleninformationen an.
+  Zeigt benutzerspezifische Inhalte und offene Testaufgaben.
 
   @module Templates
   @author Require4Testing Team
@@ -9,7 +9,10 @@
 <html lang="de" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
-    <div th:fragment="content">
+    <!-- Hinweis: th:with setzt Defaultwerte für IDE, um "Cannot resolve"-Meldungen zu vermeiden. -->
+    <!--/*@thymesVar id="user" type="com.iu.require4testing.entity.User"*/-->
+    <!--/*@thymesVar id="myTasks" type="java.util.List<com.iu.require4testing.entity.TestCaseTestRun>"*/-->
+    <div th:fragment="content" th:with="user=${user}, myTasks=${myTasks}">
 
         <!-- Begrüßungs-Banner -->
         <div class="p-5 mb-4 bg-white rounded-3 shadow-sm border">
@@ -59,12 +62,21 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr th:each="task : ${myTasks}">
-                                    <td th:text="${task.testRun.name}">Sprint 1</td>
-                                    <td th:text="${task.testCase.name}">Login Test</td>
+                                <!--/*@thymesVar id="task" type="com.iu.require4testing.entity.TestCaseTestRun"*/-->
+                                <tr th:each="task : ${myTasks}" th:with="tr=${task.testRun}, tc=${task.testCase}">
+                                    <td>
+                                        <span class="fw-bold" th:text="${tr.name}">Sprint 1</span>
+                                        <div class="small text-muted" th:text="${tr.readableId}">TR-1</div>
+                                    </td>
+                                    <td>
+                                        <div th:text="${tc.name}">Login Test</div>
+                                        <div class="small text-muted" th:text="'TC-' + ${tc.id}">TC-1</div>
+                                    </td>
                                     <td><span class="badge bg-info text-dark">ZUGEWIESEN</span></td>
                                     <td>
-                                        <a th:href="@{/ui/testruns/{id}(id=${task.testRun.id})}" class="btn btn-sm btn-primary">Ausführen</a>
+                                        <a th:href="@{/ui/testruns/{id}(id=${tr.id})}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-play-fill"></i> Ausführen
+                                        </a>
                                     </td>
                                 </tr>
                                 </tbody>
@@ -102,8 +114,9 @@
                 </div>
             </div>
 
-            <!-- 4. Widget für TESTFALLERSTELLER (Creator) & ADMIN & MANAGER & REQ_ENG -->
-            <div th:if="${user.role == 'CREATOR' or user.role == 'ADMIN' or user.role == 'MANAGER' or user.role == 'REQUIREMENT_ENGINEER'}" class="col-md-6">
+            <!-- 4. Widget für TESTFALLERSTELLER (Creator) & ADMIN -->
+            <!-- Hinweis: Requirements Engineers sollen dieses Widget nicht sehen (dürfen keine Testfälle definieren). -->
+            <div th:if="${user.role == 'CREATOR' or user.role == 'ADMIN'}" class="col-md-6">
                 <div class="card h-100 shadow-sm border-info">
                     <div class="card-header bg-info text-dark fw-bold">
                         <i class="bi bi-pencil-square"></i> Testdesign
@@ -117,6 +130,9 @@
             </div>
 
         </div> <!-- End Row -->
+
+        <!-- Spacer für Luft nach unten -->
+        <div class="py-5 my-5"></div>
     </div>
 </div>
 </body>

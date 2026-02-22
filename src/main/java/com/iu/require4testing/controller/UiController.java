@@ -26,18 +26,17 @@ import java.util.stream.Collectors;
 
 /**
  * Haupt-Controller für die Web-Oberfläche (UI).
- * Setzt das Rollenkonzept strikt um und verwaltet die Workflows.
+ * Setzt das Rollenkonzept um und verwaltet die Workflows.
  *
  * <p>
  * Fachliche Regeln:
  * </p>
  * <ul>
- *   <li>Anforderungen bleiben in {@code PLANNING}, solange keine Testfälle existieren (Statusberechnung im {@link RequirementService}).</li>
+ *   <li>Anforderungen bleiben in {@code PLANNING}, solange keine Testfälle existieren.</li>
  *   <li>Testläufe bleiben in {@code PLANNING}, solange keine Testfall-Zuordnung einem Tester zugewiesen ist.</li>
- *   <li>Für Testausführungen werden die Stati {@code ASSIGNED}, {@code PASSED} und {@code FAILED} verwendet.</li>
- *   <li>Testfälle können aus einer Anforderung entfernt werden (Testfall wird gelöscht, inkl. Bereinigung der Testlauf-Zuordnungen).</li>
- *   <li>Testfälle können aus einem Testlauf entfernt werden (Zuordnung {@link TestCaseTestRun} wird gelöscht).</li>
- *   <li>Zuordnungen können auf einen anderen Tester umgehängt werden (Reassign), der Status wird dabei auf {@code ASSIGNED} gesetzt.</li>
+ *   <li>Testmanager (MANAGER) dürfen Testläufe verwalten und Ergebnisse erfassen, aber KEINE Testfälle in Anforderungen definieren oder löschen.</li>
+ *   <li>Bestehende Ergebnisse (PASSED/FAILED) dürfen nur von ADMIN oder MANAGER nachträglich geändert werden.</li>
+ *   <li>Testfälle dürfen innerhalb eines Testlaufs nicht mehrfach zugewiesen werden.</li>
  * </ul>
  *
  * <p>
@@ -45,14 +44,8 @@ import java.util.stream.Collectors;
  * Admin, Tester, Testfallersteller, Testmanager, Requirements Engineer.
  * </p>
  *
- * <p>
- * Technischer Hinweis:
- * Die Abhängigkeiten werden per Constructor Injection eingebunden. Dadurch werden Feldinjektionen vermieden,
- * die Klasse wird testbarer und Abhängigkeiten werden explizit.
- * </p>
- *
  * @author Require4Testing Team
- * @version 3.8.0
+ * @version 4.7.0
  */
 @Controller
 public class UiController {
@@ -64,7 +57,7 @@ public class UiController {
     private final UserService userService;
 
     /**
-     * Erstellt den UI-Controller mit allen benötigten Services.
+     * Erstellt den UI-Controller mit allen benötigten Services via Constructor Injection.
      *
      * @param requirementService Service für Anforderungen
      * @param testCaseService Service für Testfälle
@@ -87,13 +80,7 @@ public class UiController {
     // --- SESSION & AUTH ---
 
     /**
-     * Liefert für Browser-Anfragen nach einem Favicon bewusst eine leere Antwort.
-     *
-     * <p>
-     * Hintergrund: Browser fordern häufig automatisch {@code /favicon.ico} an.
-     * Wenn keine Datei vorhanden ist, soll dies nicht zu einem 500-Fehler führen.
-     * Ein 204 (No Content) ist für den Browser ausreichend und verhindert unnötige Fehlermeldungen.
-     * </p>
+     * Liefert für Browser-Anfragen nach einem Favicon eine leere Antwort.
      *
      * @return 204 No Content.
      */
@@ -116,10 +103,6 @@ public class UiController {
 
     /**
      * Führt die Login-Logik aus (Demo-Modus).
-     *
-     * <p>
-     * Der ausgewählte Benutzer wird in der HTTP-Session als {@code currentUser} hinterlegt.
-     * </p>
      *
      * @param userId ID des ausgewählten Benutzers.
      * @param session HTTP-Session.
@@ -158,10 +141,6 @@ public class UiController {
     /**
      * Zeigt das Dashboard.
      *
-     * <p>
-     * Für Tester werden nur offene Aufgaben (Status {@code ASSIGNED}) angezeigt.
-     * </p>
-     *
      * @param model Model.
      * @param session HTTP-Session.
      * @return Dashboard-Template oder Redirect auf Login.
@@ -172,8 +151,13 @@ public class UiController {
         if (user == null) return "redirect:/login";
 
         model.addAttribute("user", user);
+        // Hinweis: Zur Unterdrückung von "Cannot resolve"-Meldungen im Template
+        // wird das Model-Attribut "myTasks" immer gesetzt. Für Nicht-Tester ist es eine leere Liste.
+        // Das verändert das Laufzeitverhalten nicht (die Tabelle ist ohnehin in einem th:if für TESTER).
         if ("TESTER".equals(user.getRole())) {
             model.addAttribute("myTasks", testCaseTestRunService.findAssignmentsByTester(user.getId()));
+        } else {
+            model.addAttribute("myTasks", java.util.Collections.emptyList());
         }
         return "index";
     }
@@ -198,9 +182,7 @@ public class UiController {
     /**
      * Erstellt eine neue Anforderung.
      *
-     * <p>
-     * Berechtigung: Nur Requirements Engineer und Admin.
-     * </p>
+     * <p>Berechtigung: Nur Requirements Engineer und Admin.</p>
      *
      * @param requirement Requirement-Entity aus dem Formular.
      * @param session HTTP-Session.
@@ -238,7 +220,8 @@ public class UiController {
      */
     @GetMapping("/ui/requirements/{id}")
     public String requirementDetails(@PathVariable Long id, Model model, HttpSession session) {
-        if (getCurrentUser(session) == null) return "redirect:/login";
+        User user = getCurrentUser(session);
+        if (user == null) return "redirect:/login";
 
         Requirement req = requirementService.findById(id);
         model.addAttribute("requirement", req);
@@ -246,22 +229,17 @@ public class UiController {
         TestCase newTestCase = new TestCase();
         newTestCase.setRequirement(req);
         model.addAttribute("newTestCase", newTestCase);
+        model.addAttribute("currentUser", user);
+        model.addAttribute("userRole", user.getRole());
 
         return "requirement_details";
     }
 
     /**
      * Erstellt einen Testfall für eine Anforderung.
-     *
-     * <p>
-     * Fachliche Regel: Sobald mindestens ein Testfall existiert, darf die Anforderung nicht mehr
-     * in {@code PLANNING} verbleiben. Daher wird nach dem Speichern der Requirement-Status
-     * explizit neu berechnet.
-     * </p>
-     *
-     * <p>
-     * Berechtigung: Nur Testfallersteller (CREATOR) und Admin.
-     * </p>
+     * Berechtigung:
+     * - Erlaubt: CREATOR (Testfallersteller), ADMIN
+     * - Nicht erlaubt: REQUIREMENT_ENGINEER (darf Anforderungen definieren, aber keine Testfälle), MANAGER
      *
      * @param id Requirement-ID.
      * @param testCase Neuer Testfall aus dem Formular.
@@ -277,9 +255,10 @@ public class UiController {
         User user = getCurrentUser(session);
         if (user == null) return "redirect:/login";
 
+        // Requirements Engineers dürfen keine Testfälle anlegen
         boolean allowed = "CREATOR".equals(user.getRole()) || "ADMIN".equals(user.getRole());
         if (!allowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Fehlende Berechtigung: Nur 'Testfallersteller' oder 'Admin' darf Testfälle erstellen.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Fehlende Berechtigung: Nur Testfallersteller oder Admin dürfen Testfälle anlegen.");
             return "redirect:/ui/requirements/" + id;
         }
 
@@ -297,18 +276,11 @@ public class UiController {
 
     /**
      * Löscht einen Testfall aus einer Anforderung.
+     * Berechtigung:
+     * - Erlaubt: CREATOR (Testfallersteller), ADMIN
+     * - Nicht erlaubt: REQUIREMENT_ENGINEER (darf Anforderungen definieren, aber keine Testfälle), MANAGER
      *
-     * <p>
-     * Fachliche Bedeutung: „Aus Anforderung entfernen“ heißt, der Testfall (Stammdaten) wird gelöscht.
-     * Dabei werden automatisch auch alle Zuordnungen des Testfalls zu Testläufen entfernt und der
-     * Requirement-Status neu berechnet.
-     * </p>
-     *
-     * <p>
-     * Berechtigung: Testfallersteller (CREATOR) oder Admin.
-     * </p>
-     *
-     * @param reqId Requirement-ID (für Redirect im UI-Kontext).
+     * @param reqId Requirement-ID.
      * @param tcId TestCase-ID.
      * @param session HTTP-Session.
      * @param redirectAttributes Flash-Messages.
@@ -322,15 +294,17 @@ public class UiController {
         User user = getCurrentUser(session);
         if (user == null) return "redirect:/login";
 
+        // Requirements Engineers dürfen keine Testfälle löschen
         boolean allowed = "CREATOR".equals(user.getRole()) || "ADMIN".equals(user.getRole());
         if (!allowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Fehlende Berechtigung: Nur 'Testfallersteller' oder 'Admin' darf Testfälle löschen.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Fehlende Berechtigung: Nur Testfallersteller oder Admin dürfen Testfälle löschen.");
             return "redirect:/ui/requirements/" + reqId;
         }
 
         testCaseService.deleteTestCaseFromRequirement(tcId);
+        requirementService.refreshRequirementStatus(reqId);
 
-        redirectAttributes.addFlashAttribute("successMessage", "Testfall wurde aus der Anforderung entfernt.");
+        redirectAttributes.addFlashAttribute("successMessage", "Testfall wurde entfernt.");
         return "redirect:/ui/requirements/" + reqId;
     }
 
@@ -355,9 +329,7 @@ public class UiController {
     /**
      * Erstellt einen Testlauf.
      *
-     * <p>
-     * Berechtigung: Nur Testmanager (MANAGER) und Admin.
-     * </p>
+     * <p>Berechtigung: Nur Testmanager (MANAGER) und Admin.</p>
      *
      * @param testRun Testlauf aus dem Formular.
      * @param requirementId Zugehörige Requirement-ID.
@@ -375,7 +347,7 @@ public class UiController {
 
         boolean allowed = "MANAGER".equals(user.getRole()) || "ADMIN".equals(user.getRole());
         if (!allowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Fehlende Berechtigung: Nur 'Testmanager' oder 'Admin' darf Testläufe erstellen.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Nur 'Testmanager' oder 'Admin' darf Testläufe erstellen.");
             return "redirect:/ui/testruns";
         }
 
@@ -414,7 +386,6 @@ public class UiController {
 
         model.addAttribute("availableTestCases", filteredTestCases);
         model.addAttribute("allUsers", userService.findAll());
-        model.addAttribute("newAssignment", new TestCaseTestRun());
         model.addAttribute("currentUser", user);
 
         return "testrun_details";
@@ -423,13 +394,7 @@ public class UiController {
     /**
      * Weist einen Testfall einem Testlauf und einem Tester zu.
      *
-     * <p>
-     * Status wird initial auf {@code ASSIGNED} gesetzt.
-     * </p>
-     *
-     * <p>
-     * Berechtigung: Testmanager (MANAGER) oder Admin.
-     * </p>
+     * <p>Berechtigung: Nur Testmanager (MANAGER) und Admin.</p>
      *
      * @param runId Testlauf-ID.
      * @param testCaseId Testfall-ID.
@@ -445,11 +410,11 @@ public class UiController {
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
         User user = getCurrentUser(session);
-        if (user == null) return "redirect:/login";
+        if (user == null || (!"MANAGER".equals(user.getRole()) && !"ADMIN".equals(user.getRole()))) return "redirect:/ui/testruns/" + runId;
 
-        boolean allowed = "MANAGER".equals(user.getRole()) || "ADMIN".equals(user.getRole());
-        if (!allowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Nur 'Testmanager' oder 'Admin' darf Tester zuweisen.");
+        // Fachliche Validierung: Dublettenprüfung
+        if (testCaseTestRunService.existsAssignment(runId, testCaseId)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Dieser Testfall ist diesem Testlauf bereits zugeordnet. Pro Lauf kann jeder Testfall nur einmal zugewiesen werden.");
             return "redirect:/ui/testruns/" + runId;
         }
 
@@ -471,160 +436,113 @@ public class UiController {
     /**
      * Entfernt eine Testfall-Zuordnung aus einem Testlauf.
      *
-     * <p>
-     * Fachliche Bedeutung: „aus Testlauf löschen“ bedeutet das Löschen der Zuordnung {@link TestCaseTestRun}.
-     * Der Testfall selbst bleibt bestehen.
-     * Nach dem Löschen werden Testlauf- und Requirement-Status neu berechnet.
-     * </p>
-     *
-     * <p>
-     * Berechtigung: Testmanager (MANAGER) oder Admin.
-     * </p>
+     * <p>Berechtigung: Nur Testmanager (MANAGER) und Admin.</p>
      *
      * @param runId Testlauf-ID.
      * @param assignmentId Zuordnungs-ID.
      * @param session HTTP-Session.
-     * @param redirectAttributes Flash-Messages.
      * @return Redirect auf die Testlauf-Detailseite.
      */
     @PostMapping("/ui/testruns/{runId}/assignments/{assignmentId}/delete")
     public String deleteAssignmentFromTestRun(@PathVariable Long runId,
                                               @PathVariable Long assignmentId,
-                                              HttpSession session,
-                                              RedirectAttributes redirectAttributes) {
+                                              HttpSession session) {
         User user = getCurrentUser(session);
-        if (user == null) return "redirect:/login";
-
-        boolean allowed = "MANAGER".equals(user.getRole()) || "ADMIN".equals(user.getRole());
-        if (!allowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Nur 'Testmanager' oder 'Admin' darf Testfälle aus einem Testlauf entfernen.");
-            return "redirect:/ui/testruns/" + runId;
-        }
-
-        TestCaseTestRun assignment = testCaseTestRunService.findById(assignmentId);
-        TestRun run = assignment.getTestRun();
+        if (user == null || (!"MANAGER".equals(user.getRole()) && !"ADMIN".equals(user.getRole()))) return "redirect:/ui/testruns/" + runId;
 
         testCaseTestRunService.deleteTestCaseTestRun(assignmentId);
+        updateTestRunStatus(testRunService.findById(runId));
 
-        TestRun refreshedRun = testRunService.findById(run.getId());
-        updateTestRunStatus(refreshedRun);
-
-        redirectAttributes.addFlashAttribute("successMessage", "Testfall wurde aus dem Testlauf entfernt.");
         return "redirect:/ui/testruns/" + runId;
     }
 
     /**
-     * Weist eine bestehende Zuordnung (TestCaseTestRun) einem anderen Tester zu.
+     * Weist eine bestehende Zuordnung einem anderen Tester zu.
      *
-     * <p>
-     * Fachliche Bedeutung: Reassign ändert die Zuordnung auf einen anderen Tester.
-     * Der Status wird auf {@code ASSIGNED} gesetzt, damit die Aufgabe beim neuen Tester wieder als offen erscheint.
-     * Anschließend wird der Testlaufstatus neu berechnet.
-     * </p>
-     *
-     * <p>
-     * Berechtigung: Testmanager (MANAGER) oder Admin.
-     * </p>
+     * <p>Berechtigung: Nur Testmanager (MANAGER) und Admin.</p>
      *
      * @param runId Testlauf-ID.
      * @param assignmentId Zuordnungs-ID.
      * @param userId ID des neuen Testers.
      * @param session HTTP-Session.
-     * @param redirectAttributes Flash-Messages.
      * @return Redirect auf die Testlauf-Detailseite.
      */
     @PostMapping("/ui/testruns/{runId}/assignments/{assignmentId}/reassign")
     public String reassignTester(@PathVariable Long runId,
                                  @PathVariable Long assignmentId,
                                  @RequestParam Long userId,
-                                 HttpSession session,
-                                 RedirectAttributes redirectAttributes) {
+                                 HttpSession session) {
         User user = getCurrentUser(session);
-        if (user == null) return "redirect:/login";
-
-        boolean allowed = "MANAGER".equals(user.getRole()) || "ADMIN".equals(user.getRole());
-        if (!allowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Nur 'Testmanager' oder 'Admin' darf Tester neu zuweisen.");
-            return "redirect:/ui/testruns/" + runId;
-        }
+        if (user == null || (!"MANAGER".equals(user.getRole()) && !"ADMIN".equals(user.getRole()))) return "redirect:/ui/testruns/" + runId;
 
         TestCaseTestRun assignment = testCaseTestRunService.findById(assignmentId);
         assignment.setTester(userService.findById(userId));
         assignment.setStatus("ASSIGNED");
         testCaseTestRunService.save(assignment);
 
-        TestRun run = testRunService.findById(runId);
-        updateTestRunStatus(run);
-
-        redirectAttributes.addFlashAttribute("successMessage", "Tester wurde neu zugewiesen.");
+        updateTestRunStatus(testRunService.findById(runId));
         return "redirect:/ui/testruns/" + runId;
     }
 
     /**
-     * Aktualisiert den Status einer Testausführung (Zuordnung) auf {@code PASSED} oder {@code FAILED}.
+     * Erfasst das Testergebnis für eine Zuweisung.
      *
-     * <p>
-     * Berechtigung:
-     * </p>
-     * <ul>
-     *   <li>Tester darf den Status setzen, wenn ihm die Aufgabe zugewiesen ist.</li>
-     *   <li>Manager und Admin dürfen ebenfalls setzen.</li>
-     * </ul>
+     * <p>Berechtigung: Zugewiesener Tester, Manager oder Admin.</p>
+     * <p>Admin-Lock: Bestehende Ergebnisse (PASSED/FAILED) dürfen nur von ADMIN oder MANAGER nachträglich geändert werden.</p>
      *
-     * @param assignmentId ID der Zuordnung.
-     * @param status Neuer Status (erwartet: {@code PASSED} oder {@code FAILED}).
+     * @param assignmentId ID der Zuweisung.
+     * @param status Neuer Status (PASSED/FAILED).
+     * @param notes Optionale Notizen.
      * @param session HTTP-Session.
      * @param redirectAttributes Flash-Messages.
-     * @return Redirect auf die Testlauf-Detailseite.
+     * @return Redirect zur Detailansicht des Testlaufs.
      */
     @PostMapping("/ui/execution/{assignmentId}")
     public String updateStatus(@PathVariable Long assignmentId,
                                @RequestParam String status,
+                               @RequestParam(required = false) String notes,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
         User user = getCurrentUser(session);
         if (user == null) return "redirect:/login";
 
         TestCaseTestRun execution = testCaseTestRunService.findById(assignmentId);
-
         boolean isAdmin = "ADMIN".equals(user.getRole());
         boolean isManager = "MANAGER".equals(user.getRole());
-        boolean isTester = "TESTER".equals(user.getRole());
 
-        boolean isAssignedTester = execution.getTester() != null
-                && execution.getTester().getId() != null
-                && execution.getTester().getId().equals(user.getId());
-
-        boolean allowed = isAdmin || isManager || (isTester && isAssignedTester);
-        if (!allowed) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Fehlende Berechtigung: Nur der zugewiesene Tester, Testmanager oder Admin darf den Status ändern.");
+        // Unveränderbarkeit / Admin-Lock
+        boolean isFinished = "PASSED".equals(execution.getStatus()) || "FAILED".equals(execution.getStatus());
+        if (isFinished && !isAdmin && !isManager) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Abgeschlossene Tests sind gesperrt. Eine Änderung des Ergebnisses ist nur für Admins oder Testmanager möglich.");
             return "redirect:/ui/testruns/" + execution.getTestRun().getId();
         }
 
-        execution.setStatus(status);
-        testCaseTestRunService.save(execution);
+        boolean isAssigned = execution.getTester() != null && execution.getTester().getId().equals(user.getId());
+        if (isAdmin || isManager || ("TESTER".equals(user.getRole()) && isAssigned)) {
+            execution.setStatus(status);
+            execution.setNotes(notes);
+            testCaseTestRunService.save(execution);
+            updateTestRunStatus(execution.getTestRun());
+            redirectAttributes.addFlashAttribute("successMessage", "Ergebnis erfasst.");
+            return "redirect:/ui/testruns/" + execution.getTestRun().getId();
+        }
 
-        TestRun run = execution.getTestRun();
-        updateTestRunStatus(run);
-
-        redirectAttributes.addFlashAttribute("successMessage", "Status wurde aktualisiert.");
-        return "redirect:/ui/testruns/" + run.getId();
+        redirectAttributes.addFlashAttribute("errorMessage", "Keine Berechtigung zur Ergebniserfassung.");
+        return "redirect:/ui/testruns/" + execution.getTestRun().getId();
     }
 
     /**
-     * Aktualisiert den Status eines Testlaufs gemäß den fachlichen Regeln.
+     * Berechnet den Status eines Testlaufs basierend auf seinen Zuweisungen neu.
+     * Kaskadiert die Statusänderung auch zum zugehörigen Requirement.
      *
      * <p>
      * Regeln:
+     * - Einer FAILED -> Testlauf FAILED.
+     * - Alle PASSED -> Testlauf SUCCESSFUL.
+     * - Sonst IN_PROGRESS oder PLANNING.
      * </p>
-     * <ul>
-     *   <li>{@code PLANNING}: solange keine Zuordnung existiert, die tatsächlich einem Tester zugewiesen ist.</li>
-     *   <li>{@code FAILED}: sobald mindestens eine Ausführung {@code FAILED} ist.</li>
-     *   <li>{@code SUCCESSFUL}: wenn mindestens eine Ausführung existiert und alle Ausführungen {@code PASSED} sind.</li>
-     *   <li>{@code IN_PROGRESS}: in allen anderen Fällen (typischerweise wenn mind. eine Ausführung {@code ASSIGNED} ist).</li>
-     * </ul>
      *
-     * @param run Der Testlauf, dessen Status aktualisiert werden soll.
+     * @param run Der zu aktualisierende Testlauf.
      */
     private void updateTestRunStatus(TestRun run) {
         boolean anyFailed = false;
@@ -657,6 +575,7 @@ public class UiController {
         if (!newStatus.equals(run.getStatus())) {
             run.setStatus(newStatus);
             testRunService.save(run);
+            // Kaskadierung zum Requirement
             requirementService.refreshRequirementStatus(run.getRequirement().getId());
         }
     }

@@ -7,6 +7,15 @@ import java.util.Objects;
 /**
  * Entity-Klasse für Benutzer.
  * Repräsentiert einen Benutzer des Require4Testing-Systems.
+ *
+ * <p>
+ * Enthält minimale Stammdaten (Username, E-Mail, Rolle) sowie technische Zeitstempel.
+ * Passwörter sind hier als Platzhalter für Demo-Zwecke hinterlegt, in Produktivsystemen
+ * müssen Passwörter grundsätzlich gehasht gespeichert werden.
+ * </p>
+ *
+ * @author Require4Testing Team
+ * @version 1.2.0
  */
 @Entity
 @Table(name = "users")

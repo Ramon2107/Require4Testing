@@ -17,7 +17,8 @@
     </style>
 </head>
 <body>
-<main class="form-signin text-center">
+<!--/*@thymesVar id="users" type="java.util.List<com.iu.require4testing.entity.User>"*/-->
+<main class="form-signin text-center" th:with="users=${users}">
     <form action="/login" method="post">
 
         <div class="mb-3 d-flex justify-content-center">
@@ -46,17 +47,11 @@
         <div class="form-floating mb-3">
             <select name="userId" class="form-select" id="floatingSelect" required aria-label="Benutzer auswählen">
                 <option value="" selected disabled>Benutzer wählen...</option>
+
                 <option th:each="u : ${users}"
                         th:value="${u.id}"
-                        th:text="${u.username
-                            + ' ('
-                            + (u.role == 'ADMIN' ? 'Admin'
-                            : u.role == 'MANAGER' ? 'Testmanager'
-                            : u.role == 'CREATOR' ? 'Testfallersteller'
-                            : u.role == 'REQUIREMENT_ENGINEER' ? 'Requirements Engineer'
-                            : u.role == 'TESTER' ? 'Tester'
-                            : 'Benutzer')
-                            + ')'}">
+                        th:with="roleLabel=${u.role == 'ADMIN' ? 'Admin' : (u.role == 'MANAGER' ? 'Testmanager' : (u.role == 'CREATOR' ? 'Testfallersteller' : (u.role == 'REQUIREMENT_ENGINEER' ? 'Requirements Engineer' : (u.role == 'TESTER' ? 'Tester' : 'Benutzer'))))}"
+                        th:text="${u.username + ' (' + roleLabel + ')'}">
                     User (Rolle)
                 </option>
             </select>

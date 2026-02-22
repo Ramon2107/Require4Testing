@@ -1,103 +1,187 @@
 package com.iu.require4testing.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 /**
- * Entity für die Many-to-Many-Zuordnung zwischen Testfällen und Testläufen.
- * <p>
- * Diese Klasse repräsentiert die Ausführung eines Testfalls innerhalb eines spezifischen Testlaufs.
- * Sie speichert zusätzlich, welcher Tester zugeordnet ist und den aktuellen Status der Durchführung.
- * </p>
+ * Entity-Klasse für die Many-to-Many-Zuordnung zwischen Testfällen und Testläufen.
+  * Diese Klasse speichert den Zustand einer Testausführung innerhalb eines spezifischen Laufs.
+ * Hier werden das Ergebnis (Status), Anmerkungen des Testers und der exakte Zeitpunkt der Durchführung persistiert.
  *
  * @author Require4Testing Team
- * @version 1.0.0
+ * @version 1.6.0
  */
 @Entity
 @Table(name = "test_case_test_run")
 public class TestCaseTestRun {
 
-    /** Eindeutige ID der Zuordnung. */
+    // Hinweis: JPA/Hibernate benötigt einen No-Args-Konstruktor.
+    // Wir definieren ihn explizit (protected), um die Vorgaben klar zu erfüllen,
+    // ohne das Verhalten zu verändern.
+    public TestCaseTestRun() {
+        // absichtlich leer
+    }
+
+    /**
+     * Die eindeutige technische Identifikationsnummer dieser Ausführung.
+     * Dient als Primärschlüssel und wird automatisch generiert.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Der auszuführende Testfall. */
+    /**
+     * Der Testfall, der ausgeführt wird.
+     * Verweist auf die TestCase-Entität.
+     */
     @ManyToOne
     @JoinColumn(name = "test_case_id", nullable = false)
     private TestCase testCase;
 
-    /** Der Testlauf, in dem dieser Testfall ausgeführt wird. */
+    /**
+     * Der Testlauf, in dem dieser Testfall stattfindet.
+     * Verweist auf die TestRun-Entität.
+     */
     @ManyToOne
     @JoinColumn(name = "test_run_id", nullable = false)
     private TestRun testRun;
 
-    /** Der Tester (User), dem dieser Testfall zugewiesen wurde. */
+    /**
+     * Der Benutzer (Tester), dem diese Ausführung zugewiesen wurde.
+     * Verweist auf die User-Entität.
+     */
     @ManyToOne
     @JoinColumn(name = "tester_id")
     private User tester;
 
-    /** Der Status der Ausführung (z.B. "OPEN", "PASSED", "FAILED"). */
+    /**
+     * Der aktuelle Status der Durchführung.
+     * Erlaubte Werte sind typischerweise ASSIGNED, PASSED oder FAILED.
+     */
+    @Column(name = "status", nullable = false)
     private String status;
 
-    // --- Getter und Setter ---
+    /**
+     * Optionale Notizen, Fehlerbeschreibungen oder Kommentare des Testers zur Durchführung.
+     */
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 
     /**
-     * Gibt die ID der Zuordnung zurück.
-     * @return die ID
+     * Der exakte Zeitpunkt, an dem die Testausführung durchgeführt oder das Ergebnis gespeichert wurde.
      */
-    public Long getId() { return id; }
+    @Column(name = "executed_at")
+    private LocalDateTime executedAt;
 
     /**
-     * Setzt die ID der Zuordnung.
-     * @param id die neue ID
+     * Gibt die technische ID der Zuordnung zurück.
+     * @return Die ID als Long.
      */
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
     /**
-     * Gibt den zugeordneten Testfall zurück.
-     * @return das TestCase Objekt
+     * Legt die technische ID der Zuordnung fest.
+     * @param id Die neue technische ID.
      */
-    public TestCase getTestCase() { return testCase; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     /**
-     * Setzt den zugeordneten Testfall.
-     * @param testCase das neue TestCase Objekt
+     * Liefert den zugeordneten Testfall zurück.
+     * @return Das TestCase-Objekt.
      */
-    public void setTestCase(TestCase testCase) { this.testCase = testCase; }
+    public TestCase getTestCase() {
+        return testCase;
+    }
 
     /**
-     * Gibt den Testlauf zurück.
-     * @return das TestRun Objekt
+     * Verknüpft einen Testfall mit dieser Ausführung.
+     * @param testCase Der auszuführende Testfall.
      */
-    public TestRun getTestRun() { return testRun; }
+    public void setTestCase(TestCase testCase) {
+        this.testCase = testCase;
+    }
 
     /**
-     * Setzt den Testlauf.
-     * @param testRun das neue TestRun Objekt
+     * Liefert den zugeordneten Testlauf zurück.
+     * @return Das TestRun-Objekt.
      */
-    public void setTestRun(TestRun testRun) { this.testRun = testRun; }
+    public TestRun getTestRun() {
+        return testRun;
+    }
 
     /**
-     * Gibt den zugewiesenen Tester zurück.
-     * @return das User Objekt
+     * Ordnet diese Ausführung einem Testlauf zu.
+     * @param testRun Der übergeordnete Testlauf.
      */
-    public User getTester() { return tester; }
+    public void setTestRun(TestRun testRun) {
+        this.testRun = testRun;
+    }
 
     /**
-     * Setzt den zugewiesenen Tester.
-     * @param tester das neue User Objekt
+     * Liefert den zuständigen Tester zurück.
+     * @return Das User-Objekt des Testers.
      */
-    public void setTester(User tester) { this.tester = tester; }
+    public User getTester() {
+        return tester;
+    }
 
     /**
-     * Gibt den Status der Ausführung zurück.
-     * @return der Status als String
+     * Weist diese Ausführung einem bestimmten Tester zu.
+     * @param tester Der ausführende Benutzer.
      */
-    public String getStatus() { return status; }
+    public void setTester(User tester) {
+        this.tester = tester;
+    }
 
     /**
-     * Setzt den Status der Ausführung.
-     * @param status der neue Status (z.B. "PASSED")
+     * Gibt den aktuellen Status der Testdurchführung zurück.
+     * @return Der Status als String (z. B. "PASSED").
      */
-    public void setStatus(String status) { this.status = status; }
+    public String getStatus() {
+        return status;
+    }
+
+    /**
+     * Aktualisiert den Status der Testausführung.
+     * @param status Der neue Status-String.
+     */
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    /**
+     * Liefert die hinterlegten Notizen des Testers zurück.
+     * @return Die Notizen als String oder null.
+     */
+    public String getNotes() {
+        return notes;
+    }
+
+    /**
+     * Ermöglicht das Speichern von Kommentaren zur Durchführung.
+     * @param notes Die neuen Notizen des Testers.
+     */
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    /**
+     * Liefert den Ausführungszeitpunkt zurück.
+     * @return Der Zeitpunkt als LocalDateTime oder null.
+     */
+    public LocalDateTime getExecutedAt() {
+        return executedAt;
+    }
+
+    /**
+     * Legt den Zeitpunkt der Testdurchführung fest.
+     * @param executedAt Der Ausführungszeitpunkt.
+     */
+    public void setExecutedAt(LocalDateTime executedAt) {
+        this.executedAt = executedAt;
+    }
 }

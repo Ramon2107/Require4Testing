@@ -8,7 +8,11 @@
 <html lang="de" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
-    <div th:fragment="content">
+    <!-- Hinweis: Defaults für IDE, beeinflusst Runtime nicht. -->
+    <!--/*@thymesVar id="testRuns" type="java.util.List<com.iu.require4testing.entity.TestRun>"*/-->
+    <!--/*@thymesVar id="requirements" type="java.util.List<com.iu.require4testing.entity.Requirement>"*/-->
+    <!--/*@thymesVar id="newTestRun" type="com.iu.require4testing.entity.TestRun"*/-->
+    <div th:fragment="content" th:with="testRuns=${testRuns}, requirements=${requirements}, newTestRun=${newTestRun}">
         <div class="row">
             <!-- Neuer Testlauf -->
             <div class="col-md-4">

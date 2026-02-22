@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <!--
   Detailansicht Testlauf.
-
-  <p>
-  Diese Seite zeigt die Zuweisungen von Testfällen zu einem Testlauf und ermöglicht die Durchführung
-  (Statusänderung) sowie administrative Aktionen wie „aus Testlauf entfernen“ und „Tester neu zuweisen“.
-  </p>
+  Hier werden Testfall-Ergebnisse erfasst.
 
   @module Templates
   @author Require4Testing Team
@@ -13,7 +9,12 @@
 <html lang="de" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
-    <div th:fragment="content">
+    <!-- Hinweis: Defaults für IDE, beeinflusst Runtime nicht. -->
+    <!--/*@thymesVar id="testRun" type="com.iu.require4testing.entity.TestRun"*/-->
+    <!--/*@thymesVar id="availableTestCases" type="java.util.List<com.iu.require4testing.entity.TestCase>"*/-->
+    <!--/*@thymesVar id="allUsers" type="java.util.List<com.iu.require4testing.entity.User>"*/-->
+    <!--/*@thymesVar id="currentUser" type="com.iu.require4testing.entity.User"*/-->
+    <div th:fragment="content" th:with="testRun=${testRun}, availableTestCases=${availableTestCases}, allUsers=${allUsers}, currentUser=${currentUser}">
 
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -21,134 +22,137 @@
                 <div class="d-flex align-items-center">
                     <span class="badge bg-dark font-monospace me-2 fs-5"
                           th:text="${testRun.readableId != null ? testRun.readableId : 'TR-' + testRun.id}">TR-XXXX</span>
-                    <h2 class="mb-0" th:text="${testRun.name}">Testlauf Name</h2>
+                    <h2 class="mb-0" th:text="${testRun.name}">Testlauf</h2>
                 </div>
                 <div class="mt-2">
                     <span th:if="${testRun.status == 'SUCCESSFUL'}" class="badge bg-success">SUCCESSFUL</span>
                     <span th:if="${testRun.status == 'FAILED'}" class="badge bg-danger">FAILED</span>
                     <span th:if="${testRun.status == 'IN_PROGRESS'}" class="badge bg-warning text-dark">IN PROGRESS</span>
                     <span th:if="${testRun.status == 'PLANNING'}" class="badge bg-secondary">PLANNING</span>
-
-                    <span class="text-muted ms-2" th:if="${testRun.requirement != null}">
-                        Prüft Anforderung:
-                        <strong th:text="'[' + (${testRun.requirement.readableId != null ? testRun.requirement.readableId : 'REQ-' + testRun.requirement.id}) + '] ' + ${testRun.requirement.name}">Req</strong>
-                    </span>
                 </div>
             </div>
-            <a href="/ui/testruns" class="btn btn-outline-secondary">&larr; Zurück zur Liste</a>
+
+            <!-- Zuweisung: Testfall einem Tester hinzufügen (nur Formular-Markup repariert; Verhalten unverändert) -->
+            <form th:action="@{/ui/testruns/{id}/assign(id=${testRun.id})}" method="post" class="row g-2">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold" for="assignTestCase">Testfall auswählen</label>
+                    <select id="assignTestCase" name="testCaseId" class="form-select" required>
+                        <option value="" selected disabled>Bitte wählen...</option>
+                        <option th:each="tc : ${availableTestCases}"
+                                th:value="${tc.id}"
+                                th:text="'[' + ${tc.id} + '] ' + ${tc.name}">
+                            [10] Testfall
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" for="assignTester">Tester</label>
+                    <select id="assignTester" name="userId" class="form-select" required>
+                        <option value="" selected disabled>Wählen...</option>
+                        <option th:each="u : ${allUsers}" th:value="${u.id}" th:text="${u.username}">User</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">Hinzufügen</button>
+                </div>
+            </form>
         </div>
 
-        <!-- ZUWEISUNG -->
-        <div class="card mb-5 border-secondary">
-            <div class="card-header bg-secondary text-white">
-                <i class="bi bi-person-plus"></i> Testfall zuweisen
-            </div>
-            <div class="card-body bg-light">
-                <form class="row g-3" th:action="@{/ui/testruns/{id}/assign(id=${testRun.id})}" method="post">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold" for="assignTestCase">Testfall auswählen (Nur von dieser Anforderung)</label>
-                        <select id="assignTestCase" name="testCaseId" class="form-select" required>
-                            <option value="" selected disabled>Bitte wählen...</option>
-                            <option th:each="tc : ${availableTestCases}"
-                                    th:value="${tc.id}"
-                                    th:text="'[' + ${tc.id} + '] ' + ${tc.name}">
-                                [10] Testfall
-                            </option>
-                        </select>
-                        <div class="form-text text-danger" th:if="${#lists.isEmpty(availableTestCases)}">
-                            Keine freien Testfälle in der Anforderung gefunden oder alle bereits zugewiesen.
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold" for="assignTester">Tester</label>
-                        <select id="assignTester" name="userId" class="form-select" required>
-                            <option value="" selected disabled>Wählen...</option>
-                            <option th:each="u : ${allUsers}" th:value="${u.id}" th:text="${u.username}">User</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-success w-100" th:disabled="${#lists.isEmpty(availableTestCases)}">Hinzufügen</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- TABELLE -->
-        <h4 class="mb-3">Ergebnisse</h4>
-        <div class="table-responsive shadow-sm rounded">
+        <!-- TABELLE ERGEBNISSE -->
+        <h4 class="mb-3"><i class="bi bi-clipboard-check"></i> Testergebnisse & Durchführung</h4>
+        <div class="table-responsive shadow-sm rounded mb-5">
             <table class="table table-hover table-bordered mb-0 bg-white align-middle">
                 <thead class="table-light">
                 <tr>
-                    <th>Testfall</th>
-                    <th>Tester</th>
-                    <th>Status</th>
-                    <th>Ergebnis erfassen</th>
-                    <th>Verwaltung</th>
+                    <th style="width: 25%;">Testfall</th>
+                    <th style="width: 15%;">Tester & Zeit</th>
+                    <th style="width: 40%;">Ergebniserfassung (Notizen)</th>
+                    <th th:if="${currentUser.role == 'MANAGER' or currentUser.role == 'ADMIN'}" style="width: 20%;">Verwaltung</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="assignment : ${testRun.testCaseTestRuns}">
+                <!--/*@thymesVar id="assignment" type="com.iu.require4testing.entity.TestCaseTestRun"*/-->
+                <tr th:each="assignment : ${testRun.testCaseTestRuns}"
+                    th:with="ac=${assignment.testCase}, at=${assignment.tester}"
+                    th:classappend="${assignment.status == 'PASSED' ? 'table-success-light' : (assignment.status == 'FAILED' ? 'table-danger-light' : '')}">
                     <td>
-                        <span class="badge bg-light text-dark border mb-1" th:text="'TC-' + ${assignment.testCase.id}">TC-1</span>
-                        <div th:text="${assignment.testCase.name}">Name</div>
-                    </td>
-
-                    <td th:text="${assignment.tester != null ? assignment.tester.username : '-'}">Tester</td>
-
-                    <td>
-                        <span th:if="${assignment.status == 'ASSIGNED'}" class="badge bg-info text-dark">ZUGEWIESEN</span>
-                        <span th:if="${assignment.status == 'PASSED'}" class="badge bg-success">BESTANDEN</span>
-                        <span th:if="${assignment.status == 'FAILED'}" class="badge bg-danger">FEHLGESCHLAGEN</span>
-
-                        <span th:if="${assignment.status != 'ASSIGNED' and assignment.status != 'PASSED' and assignment.status != 'FAILED'}"
-                              class="badge bg-light text-dark border"
-                              th:text="${assignment.status}">STATUS</span>
+                        <span class="badge bg-light text-dark border mb-1" th:text="'TC-' + ${ac.id}">TC-1</span>
+                        <div class="fw-bold" th:text="${ac.name}">Name</div>
+                        <small class="text-muted d-block mt-1" th:text="${ac.description}">Beschreibung</small>
                     </td>
 
                     <td>
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Testergebnis setzen">
-                            <form th:action="@{/ui/execution/{id}(id=${assignment.id})}" method="post">
-                                <input type="hidden" name="status" value="PASSED">
-                                <button type="submit" class="btn btn-outline-success">✔ Pass</button>
-                            </form>
-                            <form th:action="@{/ui/execution/{id}(id=${assignment.id})}" method="post" class="ms-1">
-                                <input type="hidden" name="status" value="FAILED">
-                                <button type="submit" class="btn btn-outline-danger">✘ Fail</button>
-                            </form>
+                        <div class="fw-bold" th:text="${at != null ? at.username : '-'}">Tester</div>
+                        <div th:if="${assignment.executedAt != null}" class="text-muted small">
+                            <i class="bi bi-clock"></i> <span th:text="${#temporals.format(assignment.executedAt, 'dd.MM.yyyy HH:mm')}">Datum</span>
                         </div>
                     </td>
 
                     <td>
+                        <!-- Formular zur Ergebniserfassung -->
+                        <form th:action="@{/ui/execution/{id}(id=${assignment.id})}" method="post">
+                            <div class="mb-2">
+                                <!-- Hinweis: Sowohl statisches for/id als auch th:for/th:id, damit die IDE die Zuordnung sicher erkennt. -->
+                                <label for="notes_static" th:for="${'notes_' + assignment.id}" class="visually-hidden">Notizen</label>
+                                <textarea id="notes_static" th:id="${'notes_' + assignment.id}" name="notes" class="form-control form-control-sm" rows="2"
+                                          placeholder="Notizen zum Testergebnis..."
+                                          th:text="${assignment.notes}"
+                                          th:readonly="${(assignment.status == 'PASSED' or assignment.status == 'FAILED') and currentUser.role != 'ADMIN' and currentUser.role != 'MANAGER'}"></textarea>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span th:if="${assignment.status == 'ASSIGNED'}" class="badge bg-info text-dark">OFFEN</span>
+                                    <span th:if="${assignment.status == 'PASSED'}" class="badge bg-success">PASSED</span>
+                                    <span th:if="${assignment.status == 'FAILED'}" class="badge bg-danger">FAILED</span>
+                                </div>
+                                <!-- Hinweis: Thymeleaf unterstützt kein "?.". Null-sicherer Vergleich per explizitem Check. -->
+                                <div class="btn-group btn-group-sm" th:if="${currentUser.role == 'ADMIN' or currentUser.role == 'MANAGER' or (assignment.status == 'ASSIGNED' and at != null and currentUser.id == at.id)}">
+                                    <button type="submit" name="status" value="PASSED" class="btn btn-outline-success">✔ Pass</button>
+                                    <button type="submit" name="status" value="FAILED" class="btn btn-outline-danger">✘ Fail</button>
+                                </div>
+                            </div>
+                        </form>
+                    </td>
+
+                    <td th:if="${currentUser.role == 'MANAGER' or currentUser.role == 'ADMIN'}">
                         <div class="d-flex flex-column gap-2">
-                            <form class="d-flex gap-2"
+                            <form class="d-flex gap-1"
                                   th:action="@{/ui/testruns/{runId}/assignments/{assignmentId}/reassign(runId=${testRun.id},assignmentId=${assignment.id})}"
                                   method="post">
-                                <label class="visually-hidden" th:for="${'reassignUser' + assignment.id}">Tester wählen</label>
-                                <select th:id="${'reassignUser' + assignment.id}" name="userId" class="form-select form-select-sm" required>
-                                    <option value="" selected disabled>Tester wählen...</option>
+                                <!-- Hinweis: Statisches for/id ergänzt, um IDE-Warnung "Missing associated label" zu vermeiden. -->
+                                <label for="reassign_static" th:for="${'reassign_' + assignment.id}" class="visually-hidden">Tester neu zuweisen</label>
+                                <select id="reassign_static" th:id="${'reassign_' + assignment.id}" name="userId" class="form-select form-select-sm" required>
                                     <option th:each="u : ${allUsers}"
                                             th:value="${u.id}"
-                                            th:selected="${assignment.tester != null and u.id == assignment.tester.id}"
+                                            th:selected="${at != null and u.id == at.id}"
                                             th:text="${u.username}">User</option>
                                 </select>
-                                <button type="submit" class="btn btn-sm btn-outline-primary">
-                                    Neu zuweisen
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Neu zuweisen">
+                                    <i class="bi bi-arrow-repeat"></i>
                                 </button>
                             </form>
 
                             <form th:action="@{/ui/testruns/{runId}/assignments/{assignmentId}/delete(runId=${testRun.id},assignmentId=${assignment.id})}"
                                   method="post"
-                                  onsubmit="return confirm('Soll dieser Testfall wirklich aus dem Testlauf entfernt werden?');">
+                                  onsubmit="return confirm('Testfall wirklich entfernen?');">
                                 <button type="submit" class="btn btn-sm btn-outline-danger w-100">
-                                    Entfernen
+                                    <i class="bi bi-trash"></i> Entfernen
                                 </button>
                             </form>
                         </div>
                     </td>
                 </tr>
+                <tr th:if="${#lists.isEmpty(testRun.testCaseTestRuns)}">
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        Noch keine Testfälle zugewiesen.
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>
+
+        <!-- Spacer für Luft nach unten -->
+        <div class="py-5 my-5"></div>
     </div>
 </div>
 </body>

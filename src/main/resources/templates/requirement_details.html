@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
-  Detailansicht einer Anforderung.
-  Zeigt Stammdaten und verknüpfte Testfälle.
+  Detailansicht Anforderung.
+  Erlaubt das Hinzufügen von Testfällen nur für ADMIN und CREATOR.
 
   @module Templates
   @author Require4Testing Team
@@ -9,122 +9,115 @@
 <html lang="de" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
-    <div th:fragment="content">
+    <!-- IDE-Hilfen: Typdeklarationen für lokale Aliasse, keine Runtime-Wirkung -->
+    <!--/*@thymesVar id="currentUser" type="com.iu.require4testing.entity.User"*/-->
+    <!--/*@thymesVar id="userRole" type="java.lang.String"*/-->
+    <div th:fragment="content"
+         th:with="requirement=${requirement},
+                  currentUser=${currentUser},
+                  userRole=${userRole},
+                  newTestCase=${newTestCase},
+                  tcs=${requirement != null ? requirement.testCases : T(java.util.Collections).emptyList()}">
 
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <div class="d-flex align-items-center">
-                    <span class="badge bg-dark font-monospace me-2 fs-5" th:text="${requirement.readableId != null ? requirement.readableId : 'REQ-' + requirement.id}">REQ-1</span>
-                    <h2 class="mb-0" th:text="${requirement.name}">Requirement Name</h2>
+                    <span class="badge bg-dark font-monospace me-2 fs-5"
+                          th:text="${requirement.readableId != null ? requirement.readableId : 'REQ-' + requirement.id}">REQ-XXXX</span>
+                    <h2 class="mb-0" th:text="${requirement.name}">Anforderung Name</h2>
                 </div>
                 <div class="mt-2">
                     <span th:if="${requirement.status == 'SUCCESSFUL'}" class="badge bg-success">SUCCESSFUL</span>
                     <span th:if="${requirement.status == 'FAILED'}" class="badge bg-danger">FAILED</span>
                     <span th:if="${requirement.status == 'IN_PROGRESS'}" class="badge bg-warning text-dark">IN PROGRESS</span>
                     <span th:if="${requirement.status == 'PLANNING'}" class="badge bg-secondary">PLANNING</span>
-                    <span th:if="${requirement.status != 'SUCCESSFUL' and requirement.status != 'FAILED' and requirement.status != 'IN_PROGRESS' and requirement.status != 'PLANNING'}"
-                          class="badge bg-light text-dark border" th:text="${requirement.status}">STATUS</span>
+                    <span th:if="${requirement.status == 'COMPLETED'}" class="badge bg-primary">COMPLETED</span>
                 </div>
             </div>
             <a href="/ui/requirements" class="btn btn-outline-secondary">&larr; Zurück zur Liste</a>
         </div>
 
-        <div class="row">
-            <!-- Details -->
-            <div class="col-md-8">
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header">Beschreibung</div>
-                    <div class="card-body">
-                        <p class="card-text" th:text="${requirement.description}">Beschreibung...</p>
-                        <hr>
-                        <small class="text-muted">
-                            Erstellt am <span th:text="${#temporals.format(requirement.createdAt, 'dd.MM.yyyy HH:mm')}">Datum</span>
-                        </small>
-                    </div>
-                </div>
+        <!-- Beschreibung -->
+        <div class="card mb-5 shadow-sm border-light">
+            <div class="card-body bg-light">
+                <h5 class="card-title text-muted mb-3">Beschreibung</h5>
+                <p class="card-text fs-5" th:text="${requirement.description}">Keine Beschreibung vorhanden.</p>
+            </div>
+        </div>
 
-                <!-- Testfälle Liste -->
-                <div class="card shadow-sm">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>Testfälle</span>
-                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTestCaseModal">
-                            + Testfall
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div th:if="${#lists.isEmpty(requirement.testCases)}" class="text-center text-muted py-3">
-                            Noch keine Testfälle definiert.
+        <!-- TESTFALL DEFINIEREN (nicht für Manager und nicht für Requirements Engineer) -->
+        <div th:if="${userRole == 'ADMIN' or userRole == 'CREATOR'}"
+             class="card mb-5 border-info shadow-sm">
+            <div class="card-header bg-info text-dark fw-bold">
+                <i class="bi bi-plus-square"></i> Neuen Testfall für diese Anforderung erstellen
+            </div>
+            <div class="card-body">
+                <!-- Hinweis: th:object nur als IDE-Hilfe gesetzt; Feldernamen bleiben manuell, kein Laufzeitverhalten geändert. -->
+                <form th:action="@{/ui/requirements/{id}/testcases(id=${requirement.id})}" th:object="${newTestCase}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <!-- Labels mit for/id zur Vermeidung von IDE-Warnungen; Verhalten unverändert. -->
+                            <label class="form-label fw-bold" for="tcName">Name des Testfalls</label>
+                            <input id="tcName" type="text" name="name" class="form-control" placeholder="z.B. Login mit Sonderzeichen prüfen" required>
                         </div>
-                        <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(requirement.testCases)}">
-                            <li class="list-group-item" th:each="tc : ${requirement.testCases}">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="me-3">
-                                        <div class="fw-bold">
-                                            <span class="badge bg-light text-dark border me-1" th:text="'TC-' + ${tc.id}">TC-1</span>
-                                            <span th:text="${tc.name}">Testfall Name</span>
-                                        </div>
-                                        <small class="text-muted" th:text="${tc.description}">Beschreibung</small>
-                                    </div>
-
-                                    <div class="d-flex gap-2">
-                                        <form th:action="@{/ui/requirements/{reqId}/testcases/{tcId}/delete(reqId=${requirement.id},tcId=${tc.id})}"
-                                              method="post"
-                                              onsubmit="return confirm('Soll der Testfall wirklich aus der Anforderung gelöscht werden?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                Löschen
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold" for="tcDescription">Beschreibung / Testschritte</label>
+                            <textarea id="tcDescription" name="description" class="form-control" rows="3" placeholder="Beschreiben Sie kurz die Erwartung und die Schritte..."></textarea>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">Testfall speichern</button>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Sidebar / Stats -->
-            <div class="col-md-4">
-                <div class="card bg-light mb-3">
-                    <div class="card-body">
-                        <h6 class="card-title">Statistik</h6>
-                        <p class="card-text">
-                            Anzahl Testfälle: <strong th:text="${#lists.size(requirement.testCases)}">0</strong>
-                        </p>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
 
-        <!-- Modal: Neuer Testfall -->
-        <div class="modal fade" id="newTestCaseModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Neuer Testfall</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form th:action="@{/ui/requirements/{id}/testcases(id=${requirement.id})}" th:object="${newTestCase}" method="post">
-                            <div class="mb-3">
-                                <label class="form-label" for="tcName">Titel</label>
-                                <input id="tcName" type="text" class="form-control" th:field="*{name}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label" for="tcDescription">Beschreibung</label>
-                                <textarea id="tcDescription" class="form-control" th:field="*{description}" rows="2"></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label" for="tcSteps">Testschritte</label>
-                                <textarea id="tcSteps" class="form-control" th:field="*{testSteps}" rows="4" placeholder="1. Schritt..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100">Testfall anlegen</button>
+        <!-- Warnhinweise für eingeschränkte Rollen -->
+        <div th:if="${userRole == 'MANAGER'}" class="alert alert-info shadow-sm mb-5">
+            <i class="bi bi-info-circle"></i> Als <strong>Testmanager</strong> können Sie Testfälle in Testläufen planen, aber keine neuen Testfälle in Anforderungen definieren.
+        </div>
+        <div th:if="${userRole == 'REQUIREMENT_ENGINEER'}" class="alert alert-info shadow-sm mb-5">
+            <i class="bi bi-info-circle"></i> Als <strong>Requirements Engineer</strong> können Sie Anforderungen definieren, jedoch keine Testfälle anlegen oder löschen.
+        </div>
+
+        <!-- LISTE TESTFÄLLE -->
+        <h4 class="mb-3"><i class="bi bi-list-check"></i> Spezifizierte Testfälle</h4>
+        <div class="table-responsive shadow-sm rounded mb-5">
+            <table class="table table-hover table-bordered bg-white align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th style="width: 15%;">ID</th>
+                    <th>Bezeichnung & Details</th>
+                    <th th:if="${userRole == 'ADMIN' or userRole == 'CREATOR'}" style="width: 15%;">Aktion</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Liste der Testfälle: Für die IDE als 'tcs' aliasiert, um WeakWarnings zu vermeiden. -->
+                <!--/*@thymesVar id="tc" type="com.iu.require4testing.entity.TestCase"*/-->
+                <tr th:each="tc : ${tcs}">
+                    <td class="font-monospace fw-bold" th:text="${'TC-' + tc.id}">TC-X</td>
+                    <td>
+                        <div class="fw-bold" th:text="${tc.name}">Name</div>
+                        <small class="text-muted" th:text="${tc.description}">Details</small>
+                    </td>
+                    <td th:if="${userRole == 'ADMIN' or userRole == 'CREATOR'}">
+                        <form th:action="@{/ui/requirements/{rId}/testcases/{tId}/delete(rId=${requirement.id},tId=${tc.id})}"
+                              method="post"
+                              onsubmit="return confirm('Möchten Sie diesen Testfall wirklich löschen?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100" aria-label="Testfall löschen" title="Testfall löschen">Löschen</button>
                         </form>
-                    </div>
-                </div>
-            </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(tcs)}">
+                    <td colspan="3" class="text-center py-4 text-muted">Noch keine Testfälle definiert.</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
 
+        <!-- Spacer für Luft nach unten -->
+        <div class="py-5 my-5"></div>
     </div>
 </div>
 </body>

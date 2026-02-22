@@ -14,7 +14,9 @@
         .r4t-navbar-logo { width: 28px; height: 28px; }
     </style>
 </head>
-<body class="bg-light">
+<body class="bg-light" th:with="currentUser=${session.currentUser},
+                                 errorMessage=${errorMessage != null ? errorMessage : null},
+                                 successMessage=${successMessage != null ? successMessage : null}">
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container">
@@ -54,33 +56,37 @@
             </ul>
 
             <div class="d-flex text-white align-items-center">
-                <span th:if="${session.currentUser != null}" class="me-3 d-flex align-items-center">
+                <!-- Hinweis: Wir binden den aktuellen Benutzer als 'currentUser' ein, um IDE-Warnungen zu vermeiden. -->
+                <span th:if="${currentUser != null}" class="me-3 d-flex align-items-center">
                     <i class="bi bi-person-circle me-2"></i>
-                    <span th:text="${session.currentUser.username}" class="fw-bold">User</span>
+                    <span th:text="${currentUser.username}" class="fw-bold">User</span>
 
-                    <span class="badge bg-light text-dark ms-2" th:switch="${session.currentUser.role}">
-                        <span th:case="'ADMIN'">Admin</span>
-                        <span th:case="'MANAGER'">Testmanager</span>
-                        <span th:case="'CREATOR'">Testfallersteller</span>
-                        <span th:case="'REQUIREMENT_ENGINEER'">Requirements Engineer</span>
-                        <span th:case="'TESTER'">Tester</span>
-                        <span th:case="*">Benutzer</span>
+                    <span class="badge ms-2" th:switch="${currentUser.role}">
+                        <span th:case="'ADMIN'" class="bg-danger">Admin</span>
+                        <span th:case="'MANAGER'" class="bg-success">Testmanager</span>
+                        <span th:case="'CREATOR'" class="bg-info text-dark">Testfallersteller</span>
+                        <span th:case="'REQUIREMENT_ENGINEER'" class="bg-secondary">Requirements Engineer</span>
+                        <span th:case="'TESTER'" class="bg-warning text-dark">Tester</span>
+                        <span th:case="*" class="bg-light text-dark">Benutzer</span>
                     </span>
                 </span>
-                <a th:if="${session.currentUser != null}" href="/logout" class="btn btn-sm btn-outline-light ms-3">Logout</a>
+                <a th:if="${currentUser != null}" href="/logout" class="btn btn-sm btn-outline-light ms-3">Logout</a>
             </div>
         </div>
     </div>
 </nav>
 
-<div class="container">
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+<div class="container" th:with="errorMessage=${errorMessage}, successMessage=${successMessage}">
+    <!-- Hinweis: th:with deklariert die Flash-Variablen explizit für den IDE-Inspektor. -->
+    <!--/*@thymesVar id="errorMessage" type="java.lang.String"*/-->
+    <!--/*@thymesVar id="successMessage" type="java.lang.String"*/-->
+    <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <span th:text="${errorMessage}">Error</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schließen"></button>
     </div>
 
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+    <div th:if="${successMessage != null}" class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
         <span th:text="${successMessage}">Success</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schließen"></button>

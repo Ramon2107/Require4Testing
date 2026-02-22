@@ -4,8 +4,26 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * Entity für Testergebnisse.
- * Repräsentiert das Ergebnis der Ausführung eines Testfalls.
+ * Entity-Klasse für Testergebnisse.
+ *
+ * <p>
+ * Repräsentiert das Ergebnis einer konkreten Ausführung eines Testfalls in einem bestimmten Testlauf
+ * (wer hat wann mit welchem Status ausgeführt und welche Notizen gibt es?).
+ * Diese Entity hält ausschließlich den historischen/chronologischen Verlauf fest und ändert keine
+ * fachlichen Zustände an Anforderung/Testlauf – sie dient der Nachvollziehbarkeit.
+ * </p>
+ *
+ * <p>
+ * Technische Hinweise:
+ * </p>
+ * <ul>
+ *   <li>Zeitstempel für Erstellung/Aktualisierung werden per Lifecycle-Callbacks gepflegt.</li>
+ *   <li>Alle Bezeichner sind einfache Referenzen (IDs) und keine JPA-Relations, um die Entkopplung
+ *       bewusst schlank zu halten.</li>
+ * </ul>
+ *
+ * @author Require4Testing Team
+ * @version 1.4.0
  */
 @Entity
 @Table(name = "test_results")

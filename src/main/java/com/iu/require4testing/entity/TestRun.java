@@ -31,12 +31,13 @@ public class TestRun {
     /**
      * Eine sprechende, für Menschen lesbare ID (z.B. TR-2025-0001).
      * Muss im System eindeutig sein.
+     * Explizite Spaltenbenennung, um Inkonsistenzen mit Naming-Strategien auszuschließen.
      */
-    @Column(unique = true)
+    @Column(name = "readable_id", unique = true)
     private String readableId;
 
     /**
-     * Der Name oder Titel des Testlaufs (z.B. "Sprint 1 Regression").
+     * Der Name oder Titel des Testlaufs.
      * Darf nicht null sein.
      */
     @Column(nullable = false, length = 500)

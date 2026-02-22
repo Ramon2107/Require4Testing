@@ -8,6 +8,7 @@ import com.iu.require4testing.repository.RequirementRepository;
 import com.iu.require4testing.repository.TestCaseTestRunRepository;
 import com.iu.require4testing.repository.TestRunRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
  * </p>
  * <ul>
  *   <li>Der Status eines Testlaufs wird beim Laden automatisch anhand der zugehörigen Testfall-Zuordnungen neu berechnet,
- *       damit die Demo-Daten (data.sql) und reine Anzeige-Views konsistente Stati zeigen.</li>
+ *       damit die Demo-Daten (data_bkp.sql) und reine Anzeige-Views konsistente Stati zeigen.</li>
  * </ul>
  *
  * @author Require4Testing Team
@@ -63,6 +64,7 @@ public class TestRunService {
      *
      * @return Liste von DTOs.
      */
+    @Transactional(readOnly = true)
     public List<TestRunDTO> getAllTestRuns() {
         return testRunRepository.findAll().stream()
                 .peek(this::refreshTestRunStatusIfNeeded)
@@ -76,6 +78,7 @@ public class TestRunService {
      * @param id Testlauf-ID.
      * @return DTO.
      */
+    @Transactional(readOnly = true)
     public TestRunDTO getTestRunById(Long id) {
         TestRun testRun = testRunRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("TestRun not found"));
@@ -91,6 +94,7 @@ public class TestRunService {
      * @param createdBy Ersteller ID.
      * @return Liste von DTOs.
      */
+    @Transactional(readOnly = true)
     public List<TestRunDTO> getTestRunsByCreator(Long createdBy) {
         return getAllTestRuns().stream()
                 .filter(tr -> tr.getCreatedBy().equals(createdBy))
@@ -103,6 +107,7 @@ public class TestRunService {
      * @param status Status String.
      * @return Liste von DTOs.
      */
+    @Transactional(readOnly = true)
     public List<TestRunDTO> getTestRunsByStatus(String status) {
         return getAllTestRuns().stream()
                 .filter(tr -> tr.getStatus().equalsIgnoreCase(status))
@@ -172,6 +177,7 @@ public class TestRunService {
      *
      * @return Liste von Entities.
      */
+    @Transactional(readOnly = true)
     public List<TestRun> findAll() {
         List<TestRun> runs = testRunRepository.findAll();
         runs.forEach(this::refreshTestRunStatusIfNeeded);
@@ -184,6 +190,7 @@ public class TestRunService {
      * @param id ID.
      * @return Entity.
      */
+    @Transactional(readOnly = true)
     public TestRun findById(Long id) {
         TestRun run = testRunRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("TestRun not found"));

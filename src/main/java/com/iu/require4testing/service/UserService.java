@@ -98,7 +98,6 @@ public class UserService {
     public UserDTO createUser(UserDTO dto) {
         User user = new User();
         user.setUsername(dto.getUsername());
-        // Passwort Logik hier vereinfacht (normalerweise Hash)
         user.setRole(dto.getRole());
         return toDTO(repo.save(user));
     }
