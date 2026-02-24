@@ -109,7 +109,7 @@ public class UiController {
      * @return Redirect auf das Dashboard.
      */
     @PostMapping("/login")
-    public String login(@RequestParam Long userId, HttpSession session) {
+    public String login(@RequestParam("userId") Long userId, HttpSession session) {
         session.setAttribute("currentUser", userService.findById(userId));
         return "redirect:/";
     }
@@ -219,7 +219,7 @@ public class UiController {
      * @return Requirement-Detailtemplate oder Redirect auf Login.
      */
     @GetMapping("/ui/requirements/{id}")
-    public String requirementDetails(@PathVariable Long id, Model model, HttpSession session) {
+    public String requirementDetails(@PathVariable("id") Long id, Model model, HttpSession session) {
         User user = getCurrentUser(session);
         if (user == null) return "redirect:/login";
 
@@ -248,7 +248,7 @@ public class UiController {
      * @return Redirect auf die Requirement-Detailseite.
      */
     @PostMapping("/ui/requirements/{id}/testcases")
-    public String createTestCase(@PathVariable Long id,
+    public String createTestCase(@PathVariable("id") Long id,
                                  @ModelAttribute TestCase testCase,
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
@@ -287,8 +287,8 @@ public class UiController {
      * @return Redirect zurück auf die Requirement-Detailseite.
      */
     @PostMapping("/ui/requirements/{reqId}/testcases/{tcId}/delete")
-    public String deleteTestCaseFromRequirement(@PathVariable Long reqId,
-                                                @PathVariable Long tcId,
+    public String deleteTestCaseFromRequirement(@PathVariable("reqId") Long reqId,
+                                                @PathVariable("tcId") Long tcId,
                                                 HttpSession session,
                                                 RedirectAttributes redirectAttributes) {
         User user = getCurrentUser(session);
@@ -339,7 +339,7 @@ public class UiController {
      */
     @PostMapping("/ui/testruns")
     public String createTestRun(@ModelAttribute TestRun testRun,
-                                @RequestParam Long requirementId,
+                                @RequestParam("requirementId") Long requirementId,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
         User user = getCurrentUser(session);
@@ -373,7 +373,7 @@ public class UiController {
      * @return Testlauf-Detailtemplate oder Redirect auf Login.
      */
     @GetMapping("/ui/testruns/{id}")
-    public String testRunDetails(@PathVariable Long id, Model model, HttpSession session) {
+    public String testRunDetails(@PathVariable("id") Long id, Model model, HttpSession session) {
         User user = getCurrentUser(session);
         if (user == null) return "redirect:/login";
 
@@ -404,9 +404,9 @@ public class UiController {
      * @return Redirect auf die Testlauf-Detailseite.
      */
     @PostMapping("/ui/testruns/{runId}/assign")
-    public String assignTestCase(@PathVariable Long runId,
-                                 @RequestParam Long testCaseId,
-                                 @RequestParam Long userId,
+    public String assignTestCase(@PathVariable("runId") Long runId,
+                                 @RequestParam("testCaseId") Long testCaseId,
+                                 @RequestParam("userId") Long userId,
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
         User user = getCurrentUser(session);
@@ -444,8 +444,8 @@ public class UiController {
      * @return Redirect auf die Testlauf-Detailseite.
      */
     @PostMapping("/ui/testruns/{runId}/assignments/{assignmentId}/delete")
-    public String deleteAssignmentFromTestRun(@PathVariable Long runId,
-                                              @PathVariable Long assignmentId,
+    public String deleteAssignmentFromTestRun(@PathVariable("runId") Long runId,
+                                              @PathVariable("assignmentId") Long assignmentId,
                                               HttpSession session) {
         User user = getCurrentUser(session);
         if (user == null || (!"MANAGER".equals(user.getRole()) && !"ADMIN".equals(user.getRole()))) return "redirect:/ui/testruns/" + runId;
@@ -468,9 +468,9 @@ public class UiController {
      * @return Redirect auf die Testlauf-Detailseite.
      */
     @PostMapping("/ui/testruns/{runId}/assignments/{assignmentId}/reassign")
-    public String reassignTester(@PathVariable Long runId,
-                                 @PathVariable Long assignmentId,
-                                 @RequestParam Long userId,
+    public String reassignTester(@PathVariable("runId") Long runId,
+                                 @PathVariable("assignmentId") Long assignmentId,
+                                 @RequestParam("userId") Long userId,
                                  HttpSession session) {
         User user = getCurrentUser(session);
         if (user == null || (!"MANAGER".equals(user.getRole()) && !"ADMIN".equals(user.getRole()))) return "redirect:/ui/testruns/" + runId;
@@ -498,9 +498,9 @@ public class UiController {
      * @return Redirect zur Detailansicht des Testlaufs.
      */
     @PostMapping("/ui/execution/{assignmentId}")
-    public String updateStatus(@PathVariable Long assignmentId,
-                               @RequestParam String status,
-                               @RequestParam(required = false) String notes,
+    public String updateStatus(@PathVariable("assignmentId") Long assignmentId,
+                               @RequestParam("status") String status,
+                               @RequestParam(value = "notes", required = false) String notes,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
         User user = getCurrentUser(session);

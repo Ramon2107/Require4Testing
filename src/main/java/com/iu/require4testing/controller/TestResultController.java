@@ -57,7 +57,7 @@ public class TestResultController {
      * @return Das gefundene DTO.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<TestResultDTO> getTestResultById(@PathVariable Long id) {
+    public ResponseEntity<TestResultDTO> getTestResultById(@PathVariable("id") Long id) {
         TestResultDTO testResult = testResultService.getTestResultById(id);
         return ResponseEntity.ok(testResult);
     }
@@ -69,7 +69,7 @@ public class TestResultController {
      * @return Liste der Ergebnisse.
      */
     @GetMapping("/test-case/{testCaseId}")
-    public ResponseEntity<List<TestResultDTO>> getTestResultsByTestCase(@PathVariable Long testCaseId) {
+    public ResponseEntity<List<TestResultDTO>> getTestResultsByTestCase(@PathVariable("testCaseId") Long testCaseId) {
         List<TestResultDTO> testResults = testResultService.getTestResultsByTestCase(testCaseId);
         return ResponseEntity.ok(testResults);
     }
@@ -81,7 +81,7 @@ public class TestResultController {
      * @return Liste der Ergebnisse.
      */
     @GetMapping("/test-run/{testRunId}")
-    public ResponseEntity<List<TestResultDTO>> getTestResultsByTestRun(@PathVariable Long testRunId) {
+    public ResponseEntity<List<TestResultDTO>> getTestResultsByTestRun(@PathVariable("testRunId") Long testRunId) {
         List<TestResultDTO> testResults = testResultService.getTestResultsByTestRun(testRunId);
         return ResponseEntity.ok(testResults);
     }
@@ -93,7 +93,7 @@ public class TestResultController {
      * @return Liste der Ergebnisse.
      */
     @GetMapping("/tester/{testerId}")
-    public ResponseEntity<List<TestResultDTO>> getTestResultsByTester(@PathVariable Long testerId) {
+    public ResponseEntity<List<TestResultDTO>> getTestResultsByTester(@PathVariable("testerId") Long testerId) {
         List<TestResultDTO> testResults = testResultService.getTestResultsByTester(testerId);
         return ResponseEntity.ok(testResults);
     }
@@ -118,7 +118,7 @@ public class TestResultController {
      * @return Das aktualisierte DTO.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<TestResultDTO> updateTestResult(@PathVariable Long id,
+    public ResponseEntity<TestResultDTO> updateTestResult(@PathVariable("id") Long id,
                                                           @Valid @RequestBody TestResultDTO testResultDTO) {
         TestResultDTO updatedTestResult = testResultService.updateTestResult(id, testResultDTO);
         return ResponseEntity.ok(updatedTestResult);
@@ -131,7 +131,7 @@ public class TestResultController {
      * @return Leere Antwort.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTestResult(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTestResult(@PathVariable("id") Long id) {
         testResultService.deleteTestResult(id);
         return ResponseEntity.noContent().build();
     }

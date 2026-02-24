@@ -49,7 +49,7 @@ public class RequirementController {
      * @return Die Anforderung
      */
     @GetMapping("/{id}")
-    public ResponseEntity<RequirementDTO> getRequirementById(@PathVariable Long id) {
+    public ResponseEntity<RequirementDTO> getRequirementById(@PathVariable("id") Long id) {
         RequirementDTO requirement = requirementService.getRequirementById(id);
         return ResponseEntity.ok(requirement);
     }
@@ -61,7 +61,7 @@ public class RequirementController {
      * @return Liste der Anforderungen
      */
     @GetMapping("/creator/{createdBy}")
-    public ResponseEntity<List<RequirementDTO>> getRequirementsByCreator(@PathVariable Long createdBy) {
+    public ResponseEntity<List<RequirementDTO>> getRequirementsByCreator(@PathVariable("createdBy") Long createdBy) {
         List<RequirementDTO> requirements = requirementService.getRequirementsByCreator(createdBy);
         return ResponseEntity.ok(requirements);
     }
@@ -73,7 +73,7 @@ public class RequirementController {
      * @return Liste der gefundenen Anforderungen
      */
     @GetMapping("/search")
-    public ResponseEntity<List<RequirementDTO>> searchRequirements(@RequestParam String name) {
+    public ResponseEntity<List<RequirementDTO>> searchRequirements(@RequestParam("name") String name) {
         List<RequirementDTO> requirements = requirementService.searchRequirementsByName(name);
         return ResponseEntity.ok(requirements);
     }
@@ -100,7 +100,7 @@ public class RequirementController {
      * @return Die aktualisierte Anforderung
      */
     @PutMapping("/{id}")
-    public ResponseEntity<RequirementDTO> updateRequirement(@PathVariable Long id,
+    public ResponseEntity<RequirementDTO> updateRequirement(@PathVariable("id") Long id,
                                                             @Valid @RequestBody RequirementDTO requirementDTO) {
         RequirementDTO updatedRequirement = requirementService.updateRequirement(id, requirementDTO);
         return ResponseEntity.ok(updatedRequirement);
@@ -113,7 +113,7 @@ public class RequirementController {
      * @return Leere Antwort
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRequirement(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteRequirement(@PathVariable("id") Long id) {
         requirementService.deleteRequirement(id);
         return ResponseEntity.noContent().build();
     }

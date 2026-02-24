@@ -31,8 +31,8 @@ public class UserDTO {
              message = "Das Passwort muss mindestens einen Großbuchstaben, einen Kleinbuchstaben, eine Zahl und ein Sonderzeichen enthalten")
     private String password;
     
-    @Pattern(regexp = "^(ADMIN|MANAGER|TESTER|USER)$", 
-             message = "Rolle muss ADMIN, MANAGER, TESTER oder USER sein")
+    @Pattern(regexp = "^(ADMIN|REQUIREMENT_ENGINEER|CREATOR|MANAGER|TESTER)$", 
+             message = "Rolle muss ADMIN, REQUIREMENT_ENGINEER, CREATOR, MANAGER oder TESTER sein")
     private String role;
     
     private LocalDateTime createdAt;

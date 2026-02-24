@@ -44,22 +44,22 @@ public class TestCaseTestRunController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TestCaseTestRunDTO> getTestCaseTestRunById(@PathVariable Long id) {
+    public ResponseEntity<TestCaseTestRunDTO> getTestCaseTestRunById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(testCaseTestRunService.getTestCaseTestRunById(id));
     }
 
     @GetMapping("/test-case/{id}")
-    public ResponseEntity<List<TestCaseTestRunDTO>> getByTestCaseId(@PathVariable Long id) {
+    public ResponseEntity<List<TestCaseTestRunDTO>> getByTestCaseId(@PathVariable("id") Long id) {
         return ResponseEntity.ok(testCaseTestRunService.getByTestCaseId(id));
     }
 
     @GetMapping("/test-run/{id}")
-    public ResponseEntity<List<TestCaseTestRunDTO>> getByTestRunId(@PathVariable Long id) {
+    public ResponseEntity<List<TestCaseTestRunDTO>> getByTestRunId(@PathVariable("id") Long id) {
         return ResponseEntity.ok(testCaseTestRunService.getByTestRunId(id));
     }
 
     @GetMapping("/tester/{id}")
-    public ResponseEntity<List<TestCaseTestRunDTO>> getByTesterId(@PathVariable Long id) {
+    public ResponseEntity<List<TestCaseTestRunDTO>> getByTesterId(@PathVariable("id") Long id) {
         return ResponseEntity.ok(testCaseTestRunService.getByTesterId(id));
     }
 
@@ -69,12 +69,12 @@ public class TestCaseTestRunController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TestCaseTestRunDTO> update(@PathVariable Long id, @RequestBody TestCaseTestRunDTO dto) {
+    public ResponseEntity<TestCaseTestRunDTO> update(@PathVariable("id") Long id, @RequestBody TestCaseTestRunDTO dto) {
         return ResponseEntity.ok(testCaseTestRunService.updateTestCaseTestRun(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         testCaseTestRunService.deleteTestCaseTestRun(id);
         return ResponseEntity.noContent().build();
     }

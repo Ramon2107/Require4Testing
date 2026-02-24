@@ -52,7 +52,7 @@ public class TestCaseController {
      * @return Der Testfall
      */
     @GetMapping("/{id}")
-    public ResponseEntity<TestCaseDTO> getTestCaseById(@PathVariable Long id) {
+    public ResponseEntity<TestCaseDTO> getTestCaseById(@PathVariable("id") Long id) {
         TestCaseDTO testCase = testCaseService.getTestCaseById(id);
         return ResponseEntity.ok(testCase);
     }
@@ -64,7 +64,7 @@ public class TestCaseController {
      * @return Liste der Testfälle
      */
     @GetMapping("/requirement/{requirementId}")
-    public ResponseEntity<List<TestCaseDTO>> getTestCasesByRequirement(@PathVariable Long requirementId) {
+    public ResponseEntity<List<TestCaseDTO>> getTestCasesByRequirement(@PathVariable("requirementId") Long requirementId) {
         List<TestCaseDTO> testCases = testCaseService.getTestCasesByRequirement(requirementId);
         return ResponseEntity.ok(testCases);
     }
@@ -76,7 +76,7 @@ public class TestCaseController {
      * @return Liste der Testfälle
      */
     @GetMapping("/creator/{createdBy}")
-    public ResponseEntity<List<TestCaseDTO>> getTestCasesByCreator(@PathVariable Long createdBy) {
+    public ResponseEntity<List<TestCaseDTO>> getTestCasesByCreator(@PathVariable("createdBy") Long createdBy) {
         List<TestCaseDTO> testCases = testCaseService.getTestCasesByCreator(createdBy);
         return ResponseEntity.ok(testCases);
     }
@@ -88,7 +88,7 @@ public class TestCaseController {
      * @return Liste der gefundenen Testfälle
      */
     @GetMapping("/search")
-    public ResponseEntity<List<TestCaseDTO>> searchTestCases(@RequestParam String name) {
+    public ResponseEntity<List<TestCaseDTO>> searchTestCases(@RequestParam("name") String name) {
         List<TestCaseDTO> testCases = testCaseService.searchTestCasesByName(name);
         return ResponseEntity.ok(testCases);
     }
@@ -115,7 +115,7 @@ public class TestCaseController {
      * @return Der aktualisierte Testfall
      */
     @PutMapping("/{id}")
-    public ResponseEntity<TestCaseDTO> updateTestCase(@PathVariable Long id,
+    public ResponseEntity<TestCaseDTO> updateTestCase(@PathVariable("id") Long id,
                                                       @Valid @RequestBody TestCaseDTO testCaseDTO) {
         TestCaseDTO updatedTestCase = testCaseService.updateTestCase(id, testCaseDTO);
         return ResponseEntity.ok(updatedTestCase);
@@ -128,7 +128,7 @@ public class TestCaseController {
      * @return Leere Antwort
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTestCase(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTestCase(@PathVariable("id") Long id) {
         testCaseService.deleteTestCase(id);
         return ResponseEntity.noContent().build();
     }

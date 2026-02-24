@@ -3,6 +3,7 @@ package com.iu.require4testing.service;
 import com.iu.require4testing.dto.UserDTO;
 import com.iu.require4testing.entity.User;
 import com.iu.require4testing.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,16 +21,19 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository repo;
+    private final PasswordEncoder passwordEncoder;
 
     /**
-     * Erstellt den Service und injiziert das {@link UserRepository}.
+     * Erstellt den Service und injiziert das {@link UserRepository} und {@link PasswordEncoder}.
      *
      * <p>Hinweis: Bei genau einem Konstruktor ist in Spring keine zusätzliche Annotation nötig.</p>
      *
      * @param repo Repository für Benutzer.
+     * @param passwordEncoder Password encoder für Passwort-Hashing.
      */
-    public UserService(UserRepository repo) {
+    public UserService(UserRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // --- UI Methoden (arbeiten direkt mit Entities) ---
@@ -99,6 +103,9 @@ public class UserService {
         User user = new User();
         user.setUsername(dto.getUsername());
         user.setRole(dto.getRole());
+        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
         return toDTO(repo.save(user));
     }
 
@@ -113,6 +120,9 @@ public class UserService {
         User user = findById(id);
         user.setUsername(dto.getUsername());
         user.setRole(dto.getRole());
+        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
         return toDTO(repo.save(user));
     }
 

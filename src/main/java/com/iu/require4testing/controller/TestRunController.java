@@ -58,7 +58,7 @@ public class TestRunController {
      * @return Das gefundene {@link TestRunDTO} Objekt oder ein Fehlerstatus.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<TestRunDTO> getTestRunById(@PathVariable Long id) {
+    public ResponseEntity<TestRunDTO> getTestRunById(@PathVariable("id") Long id) {
         TestRunDTO testRun = testRunService.getTestRunById(id);
         return ResponseEntity.ok(testRun);
     }
@@ -70,7 +70,7 @@ public class TestRunController {
      * @return Eine Liste der gefundenen {@link TestRunDTO} Objekte.
      */
     @GetMapping("/creator/{createdBy}")
-    public ResponseEntity<List<TestRunDTO>> getTestRunsByCreator(@PathVariable Long createdBy) {
+    public ResponseEntity<List<TestRunDTO>> getTestRunsByCreator(@PathVariable("createdBy") Long createdBy) {
         List<TestRunDTO> testRuns = testRunService.getTestRunsByCreator(createdBy);
         return ResponseEntity.ok(testRuns);
     }
@@ -82,7 +82,7 @@ public class TestRunController {
      * @return Eine Liste der gefundenen {@link TestRunDTO} Objekte.
      */
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<TestRunDTO>> getTestRunsByStatus(@PathVariable String status) {
+    public ResponseEntity<List<TestRunDTO>> getTestRunsByStatus(@PathVariable("status") String status) {
         List<TestRunDTO> testRuns = testRunService.getTestRunsByStatus(status);
         return ResponseEntity.ok(testRuns);
     }
@@ -108,7 +108,7 @@ public class TestRunController {
      * @return Das aktualisierte {@link TestRunDTO} mit Status 200 (OK).
      */
     @PutMapping("/{id}")
-    public ResponseEntity<TestRunDTO> updateTestRun(@PathVariable Long id,
+    public ResponseEntity<TestRunDTO> updateTestRun(@PathVariable("id") Long id,
                                                     @Valid @RequestBody TestRunDTO testRunDTO) {
         TestRunDTO updatedTestRun = testRunService.updateTestRun(id, testRunDTO);
         return ResponseEntity.ok(updatedTestRun);
@@ -121,7 +121,7 @@ public class TestRunController {
      * @return Eine leere Antwort mit Status 204 (No Content).
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTestRun(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTestRun(@PathVariable("id") Long id) {
         testRunService.deleteTestRun(id);
         return ResponseEntity.noContent().build();
     }

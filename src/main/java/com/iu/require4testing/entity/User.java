@@ -31,7 +31,7 @@ public class User {
     @Column(nullable = false)
     private String password;
     
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, unique = true)
     private String email;
     
     @Column(nullable = false, length = 50)
@@ -61,7 +61,7 @@ public class User {
         this.username = username;
         this.password = password;
         this.email = email;
-        this.role = "USER";
+        this.role = "TESTER";
     }
     
     @PrePersist
@@ -69,7 +69,7 @@ public class User {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (role == null) {
-            role = "USER";
+            role = "TESTER";
         }
     }
     
