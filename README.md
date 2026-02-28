@@ -1,275 +1,152 @@
-# Require4Testing
 
-Eine Spring Boot Web-Anwendung zur Organisation manueller Anwendertests.
+# Require4Testing – Überblick & Dokumentation
 
-## Inhaltsverzeichnis
+Require4Testing ist eine **Spring‑Boot‑Webanwendung** zur Organisation **manueller Anwendertests** (Anforderungen, Testfälle, Testläufe, Ergebnisse).  
+Das Projekt entstand im Rahmen der **Aufgabenstellung 2 „Require4Testing“** des Studienmoduls  
+**IPWA02‑01 – Programmierung industrieller Informationssysteme mit JavaEE** an der IU.
 
-- [Übersicht](#übersicht)
-- [Technologien](#technologien)
-- [Installation](#installation)
-- [API-Dokumentation](#api-dokumentation)
-- [Datenmodell](#datenmodell)
+---
 
-## Übersicht
+## 1. Ziel & Funktionsumfang
 
-Require4Testing ist eine Web-Anwendung, die Teams dabei unterstützt, manuelle Anwendertests zu organisieren und zu verwalten. Die Anwendung ermöglicht:
+- **Anforderungen** anlegen und verwalten
+- **Testfälle** je Anforderung erstellen
+- **Testläufe** planen und verwalten
+- **Testfälle** Testläufen und **Testern** zuordnen
+- **Testergebnisse** erfassen (ASSIGNED, PASSED, FAILED)
+- **Rollen (UI‑seitig, prototypisch):** Admin, Requirement Engineer, Creator, Manager, Tester
 
-- Verwaltung von Anforderungen (Requirements)
-- Erstellung und Verwaltung von Testfällen (Test Cases)
-- Durchführung von Testläufen (Test Runs)
-- Dokumentation von Testergebnissen (Test Results)
-- Benutzerverwaltung mit Rollen
+> **Hinweis:** Die REST‑API ist im Prototyp nicht vollständig abgesichert; Rollentrennung erfolgt über die Web‑UI.
 
-## Technologien
+---
 
-- **Java 17**
-- **Spring Boot 3.2.0**
-- **Spring Data JPA**
-- **Spring Security**
-- **MySQL Database**
-- **Thymeleaf**
-- **Maven**
+## 2. Architektur & Technologien
 
-## Installation
+- **Architektur:** klassische **Drei‑Schichten‑Architektur**  
+  (Controller/Views – Services – Repositories/Entities)
+- **Views / Server‑Side Rendering:** Thymeleaf
+- **REST‑API:** z.B. `/api/requirements`, `/api/test-cases`, `/api/test-runs`, …
+- **Persistenz:** Spring Data JPA (Hibernate), **MariaDB**/**MySQL**
+- **Frameworks / Build:** Spring Boot, Java17, Maven
 
-### Voraussetzungen
+---
 
-- Java 17 oder höher
-- Maven 3.6+
-- MySQL 8.0+ (oder MariaDB)
+## 3. Voraussetzungen
 
-### MySQL Datenbank einrichten
+- Java 17
+- Maven
+- MariaDB **oder** MySQL
 
-1. Starten Sie MySQL Server
-2. Die Datenbank `require4testingdb` wird automatisch erstellt beim ersten Start
+---
 
-Optional können Sie die Datenbank manuell erstellen:
-```sql
-CREATE DATABASE require4testingdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+## 4. Datenbank & Initialdaten
+
+### 4.1 Variante A (empfohlen): Start über `data.sql`
+
+Spring Boot erzeugt das Schema automatisch und lädt `data.sql` beim Start.
+
+**Minimal‑Konfiguration** (`src/main/resources/application.properties`):
+
+```properties
+spring.datasource.url=jdbc:mariadb://localhost:3306/require4testingdb
+spring.datasource.username=root
+spring.datasource.password=IhrPasswort
+spring.jpa.hibernate.ddl-auto=create
+spring.sql.init.mode=always
 ```
 
-### Anwendung starten
+---
 
+### 4.2 Variante B: Datenbank‑Dump importieren
+
+Datei: **require4testingdb_dump.sql**
+
+**Import (wenn DB bereits existiert):**
 ```bash
-# Repository klonen
-git clone https://github.com/Ramon2107/Require4Testing.git
-cd Require4Testing
-
-# Anwendung bauen und starten
-mvn spring-boot:run
+mysql -u root -p require4testingdb < require4testingdb_dump.sql
 ```
 
-Die Anwendung ist dann unter `http://localhost:8080` erreichbar.
+**Falls die Datenbank noch nicht existiert:**
+```sql
+CREATE DATABASE require4testingdb
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+```
 
-### Datenbank-Konfiguration anpassen
+---
 
-Die MySQL-Verbindungsdaten können in `src/main/resources/application.properties` angepasst werden:
+## 5. Projektkonfiguration
+
+Relevante Einstellungen (`application.properties`):
+
+```properties
+spring.jpa.hibernate.ddl-auto=create      # Schema wird bei jedem Start neu erzeugt
+spring.sql.init.mode=always               # data.sql wird automatisch geladen
+```
+
+**MySQL statt MariaDB:**
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/require4testingdb
-spring.datasource.username=root
-spring.datasource.password=IhrPasswort
 ```
 
-## API-Dokumentation
+---
 
-Die REST-API bietet folgende Endpunkte:
+## 6. Anwendung starten
 
-### Benutzer (Users)
-
-| Methode | Endpunkt | Beschreibung |
-|---------|----------|--------------|
-| GET | `/api/users` | Alle Benutzer abrufen |
-| GET | `/api/users/{id}` | Benutzer nach ID abrufen |
-| GET | `/api/users/username/{username}` | Benutzer nach Benutzername abrufen |
-| POST | `/api/users` | Neuen Benutzer erstellen |
-| PUT | `/api/users/{id}` | Benutzer aktualisieren |
-| DELETE | `/api/users/{id}` | Benutzer löschen |
-
-**Beispiel - Benutzer erstellen:**
-```json
-POST /api/users
-{
-    "username": "neuerbenutzer",
-    "password": "passwort123",
-    "email": "neuer@example.de",
-    "role": "TESTER"
-}
+```bash
+git clone https://github.com/Ramon2107/Require4Testing.git
+cd Require4Testing
+mvn spring-boot:run
 ```
 
-### Anforderungen (Requirements)
+Aufruf im Browser:
 
-| Methode | Endpunkt | Beschreibung |
-|---------|----------|--------------|
-| GET | `/api/requirements` | Alle Anforderungen abrufen |
-| GET | `/api/requirements/{id}` | Anforderung nach ID abrufen |
-| GET | `/api/requirements/creator/{createdBy}` | Anforderungen nach Ersteller |
-| GET | `/api/requirements/search?name={name}` | Anforderungen suchen |
-| POST | `/api/requirements` | Neue Anforderung erstellen |
-| PUT | `/api/requirements/{id}` | Anforderung aktualisieren |
-| DELETE | `/api/requirements/{id}` | Anforderung löschen |
-
-**Beispiel - Anforderung erstellen:**
-```json
-POST /api/requirements
-{
-    "name": "Neue Anforderung",
-    "description": "Beschreibung der Anforderung",
-    "createdBy": 1
-}
+```
+http://localhost:8080
 ```
 
-### Testfälle (Test Cases)
+UI‑Login:
 
-| Methode | Endpunkt | Beschreibung |
-|---------|----------|--------------|
-| GET | `/api/test-cases` | Alle Testfälle abrufen |
-| GET | `/api/test-cases/{id}` | Testfall nach ID abrufen |
-| GET | `/api/test-cases/requirement/{requirementId}` | Testfälle nach Anforderung |
-| GET | `/api/test-cases/creator/{createdBy}` | Testfälle nach Ersteller |
-| GET | `/api/test-cases/search?name={name}` | Testfälle suchen |
-| POST | `/api/test-cases` | Neuen Testfall erstellen |
-| PUT | `/api/test-cases/{id}` | Testfall aktualisieren |
-| DELETE | `/api/test-cases/{id}` | Testfall löschen |
-
-**Beispiel - Testfall erstellen:**
-```json
-POST /api/test-cases
-{
-    "name": "Login Test",
-    "description": "Test der Login-Funktionalität",
-    "testSteps": "1. Seite öffnen\n2. Anmelden\n3. Prüfen",
-    "requirementId": 1,
-    "createdBy": 1
-}
+```
+/ui/login
 ```
 
-### Testläufe (Test Runs)
+Im Prototyp erfolgt die Anmeldung **ohne Passwort** per Benutzer‑Dropdown.  
+Beispielnutzer aus den Seed‑Daten: ADMIN, Nina (MANAGER), Luca (CREATOR),  
+Mina (REQUIREMENT_ENGINEER), Timo/Julia (TESTER).
 
-| Methode | Endpunkt | Beschreibung |
-|---------|----------|--------------|
-| GET | `/api/test-runs` | Alle Testläufe abrufen |
-| GET | `/api/test-runs/{id}` | Testlauf nach ID abrufen |
-| GET | `/api/test-runs/creator/{createdBy}` | Testläufe nach Ersteller |
-| GET | `/api/test-runs/status/{status}` | Testläufe nach Status |
-| POST | `/api/test-runs` | Neuen Testlauf erstellen |
-| PUT | `/api/test-runs/{id}` | Testlauf aktualisieren |
-| DELETE | `/api/test-runs/{id}` | Testlauf löschen |
+---
 
-**Beispiel - Testlauf erstellen:**
-```json
-POST /api/test-runs
-{
-    "name": "Sprint 3 Tests",
-    "description": "Testlauf für Sprint 3",
-    "status": "PENDING",
-    "createdBy": 1
-}
-```
+## 7. Oberfläche & API‑Endpunkte
 
-### Testergebnisse (Test Results)
+### 7.1 Web‑UI
 
-| Methode | Endpunkt | Beschreibung |
-|---------|----------|--------------|
-| GET | `/api/test-results` | Alle Testergebnisse abrufen |
-| GET | `/api/test-results/{id}` | Testergebnis nach ID abrufen |
-| GET | `/api/test-results/test-case/{testCaseId}` | Ergebnisse nach Testfall |
-| GET | `/api/test-results/test-run/{testRunId}` | Ergebnisse nach Testlauf |
-| GET | `/api/test-results/tester/{testerId}` | Ergebnisse nach Tester |
-| POST | `/api/test-results` | Neues Testergebnis erstellen |
-| PUT | `/api/test-results/{id}` | Testergebnis aktualisieren |
-| DELETE | `/api/test-results/{id}` | Testergebnis löschen |
+- Anforderungen: `/ui/requirements`
+- Testläufe: `/ui/testruns`
+- Tester‑Dashboard: `/ui/dashboard`
 
-**Beispiel - Testergebnis erstellen:**
-```json
-POST /api/test-results
-{
-    "testCaseId": 1,
-    "testRunId": 1,
-    "testerId": 2,
-    "status": "PASSED",
-    "notes": "Test erfolgreich durchgeführt"
-}
-```
+### 7.2 REST‑API (JSON, prototypisch)
 
-### Testfall-Testlauf-Zuordnungen (Test Case Test Run Assignments)
+- `/api/requirements`
+- `/api/test-cases`
+- `/api/test-runs`
+- `/api/test-case-testruns`
+- `/api/users`
 
-| Methode | Endpunkt | Beschreibung |
-|---------|----------|--------------|
-| GET | `/api/test-case-test-runs` | Alle Zuordnungen abrufen |
-| GET | `/api/test-case-test-runs/{id}` | Zuordnung nach ID abrufen |
-| GET | `/api/test-case-test-runs/test-case/{testCaseId}` | Zuordnungen nach Testfall |
-| GET | `/api/test-case-test-runs/test-run/{testRunId}` | Zuordnungen nach Testlauf |
-| GET | `/api/test-case-test-runs/tester/{testerId}` | Zuordnungen nach Tester |
-| POST | `/api/test-case-test-runs` | Neue Zuordnung erstellen |
-| PUT | `/api/test-case-test-runs/{id}` | Zuordnung aktualisieren |
-| DELETE | `/api/test-case-test-runs/{id}` | Zuordnung löschen |
+---
 
-**Beispiel - Testfall einem Testlauf mit Tester zuordnen:**
-```json
-POST /api/test-case-test-runs
-{
-    "testCaseId": 1,
-    "testRunId": 1,
-    "testerId": 2
-}
-```
+## 8. Hinweise für Prüfer:innen (Schnellstart)
 
-## Datenmodell
+1. MariaDB/MySQL starten
+2. **Entweder** Variante A: Start mit `data.sql`  
+   **oder** Variante B: Dump importieren (`require4testingdb_dump.sql`)
+3. Projekt starten: `mvn spring-boot:run`
+4. Browser öffnen: `http://localhost:8080 → /ui/login`
+5. Über die UI testen (Anforderungen, Testfälle, Testläufe, Ergebnisse)
 
-### User (Benutzer)
-- `id` - Eindeutige ID
-- `username` - Benutzername
-- `password` - Passwort
-- `email` - E-Mail-Adresse
-- `role` - Rolle (ADMIN, MANAGER, TESTER, USER)
-- `createdAt` - Erstellungszeitpunkt
-- `updatedAt` - Aktualisierungszeitpunkt
+---
 
-### Requirement (Anforderung)
-- `id` - Eindeutige ID
-- `name` - Name der Anforderung
-- `description` - Beschreibung
-- `createdBy` - Ersteller-ID
-- `createdAt` - Erstellungszeitpunkt
-- `updatedAt` - Aktualisierungszeitpunkt
+## 9. Lizenz
 
-### TestCase (Testfall)
-- `id` - Eindeutige ID
-- `name` - Name des Testfalls
-- `description` - Beschreibung
-- `testSteps` - Testschritte
-- `requirementId` - Zugehörige Anforderungs-ID
-- `createdBy` - Ersteller-ID
-- `createdAt` - Erstellungszeitpunkt
-- `updatedAt` - Aktualisierungszeitpunkt
-
-### TestRun (Testlauf)
-- `id` - Eindeutige ID
-- `name` - Name des Testlaufs
-- `description` - Beschreibung
-- `status` - Status (PENDING, IN_PROGRESS, COMPLETED)
-- `createdBy` - Ersteller-ID
-- `createdAt` - Erstellungszeitpunkt
-- `updatedAt` - Aktualisierungszeitpunkt
-
-### TestResult (Testergebnis)
-- `id` - Eindeutige ID
-- `testCaseId` - Testfall-ID
-- `testRunId` - Testlauf-ID
-- `testerId` - Tester-ID
-- `status` - Status (PASSED, FAILED, BLOCKED, SKIPPED)
-- `notes` - Notizen
-- `executedAt` - Ausführungszeitpunkt
-- `createdAt` - Erstellungszeitpunkt
-- `updatedAt` - Aktualisierungszeitpunkt
-
-### TestCaseTestRun (Testfall-Testlauf-Zuordnung)
-- `id` - Eindeutige ID
-- `testCaseId` - Testfall-ID
-- `testRunId` - Testlauf-ID
-- `testerId` - Zugewiesener Tester-ID
-
-## Lizenz
-
-Dieses Projekt ist für Lernzwecke erstellt.
+Dieses Projekt wurde für **Lern‑ und Prüfungszwecke** erstellt.

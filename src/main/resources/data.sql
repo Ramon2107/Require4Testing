@@ -5,12 +5,13 @@
 -- ==========================================================
 
 -- 1) Bereinigung (FK-Reihenfolge beachten)
-DELETE FROM test_results;
-DELETE FROM test_case_test_run;
-DELETE FROM test_runs;
-DELETE FROM test_cases;
-DELETE FROM requirements;
-DELETE FROM users;
+-- Intentional: Clear all demo data for fresh seed
+DELETE FROM test_results WHERE 1=1;
+DELETE FROM test_case_test_run WHERE 1=1;
+DELETE FROM test_runs WHERE 1=1;
+DELETE FROM test_cases WHERE 1=1;
+DELETE FROM requirements WHERE 1=1;
+DELETE FROM users WHERE 1=1;
 
 -- 2) Benutzer (Demo-Accounts) - PROTOTYP
 -- WICHTIG: Alle Benutzer haben das Passwort "demo"

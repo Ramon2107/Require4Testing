@@ -30,7 +30,6 @@ public class SecurityConfig {
 
     /**
      * Konfiguriert die Filterkette für die Web-Sicherheit.
-     * <p>
      * Hier werden folgende Einstellungen vorgenommen:
      * <ul>
      *     <li>CSRF-Schutz wird deaktiviert (für vereinfachte Entwicklung/Testen).</li>
@@ -38,7 +37,6 @@ public class SecurityConfig {
      *     <li>Alle HTTP-Requests werden zugelassen ({@code permitAll}), da die Prüfung im Controller erfolgt.</li>
      *     <li>Standard-Login und -Logout von Spring Security werden deaktiviert.</li>
      * </ul>
-     * </p>
      *
      * @param http Das {@link HttpSecurity} Objekt zur Konfiguration.
      * @return Die fertig konfigurierte {@link SecurityFilterChain}.
